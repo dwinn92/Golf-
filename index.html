@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fairway — WHS Handicap Tracker</title>
+  <meta name="description" content="Track your World Handicap System (England Golf) Handicap Index: score differentials, best 8 of 20, caps, course and playing handicaps.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">⛳</span>
+        <div>
+          <h1>Fairway</h1>
+          <p class="brand-sub">World Handicap System · England Golf rules</p>
+        </div>
+      </div>
+      <div class="hi-badge" id="topHiBadge" title="Current Handicap Index">
+        <span class="hi-badge-label">Handicap Index</span>
+        <span class="hi-badge-value" id="topHiValue">–</span>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="dashboard">Dashboard</button>
+      <button class="tab" data-tab="enter">Enter score</button>
+      <button class="tab" data-tab="history">History</button>
+      <button class="tab" data-tab="courses">Courses</button>
+      <button class="tab" data-tab="calculator">Calculator</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============ DASHBOARD ============ -->
+    <section class="panel active" id="panel-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card stat-primary">
+          <span class="stat-label">Handicap Index</span>
+          <span class="stat-value" id="statHI">–</span>
+          <span class="stat-note" id="statHINote"></span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Low HI (365 days)</span>
+          <span class="stat-value" id="statLowHI">–</span>
+          <span class="stat-note">soft cap +3.0 · hard cap +5.0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Scores recorded</span>
+          <span class="stat-value" id="statCount">0</span>
+          <span class="stat-note" id="statCountNote"></span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Best differential</span>
+          <span class="stat-value" id="statBest">–</span>
+          <span class="stat-note" id="statBestNote"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Handicap Index progression</h2>
+        <div id="chart" class="chart-holder" role="img" aria-label="Handicap Index over time"></div>
+      </div>
+
+      <div class="card">
+        <h2>Latest 20 differentials <span class="hint">— your best 8 (highlighted) make your index</span></h2>
+        <div id="recentDiffs" class="diff-strip"></div>
+      </div>
+    </section>
+
+    <!-- ============ ENTER SCORE ============ -->
+    <section class="panel" id="panel-enter">
+      <div class="card">
+        <h2>Enter a score</h2>
+        <form id="scoreForm" class="form-grid" autocomplete="off">
+          <label>Date
+            <input type="date" id="scoreDate" required>
+          </label>
+          <label>Course
+            <select id="scoreCourse" required></select>
+          </label>
+          <label>Tee
+            <select id="scoreTee" required></select>
+          </label>
+          <label>PCC adjustment
+            <select id="scorePCC">
+              <option value="-1">−1 (easier conditions)</option>
+              <option value="0" selected>0 (normal)</option>
+              <option value="1">+1</option>
+              <option value="2">+2</option>
+              <option value="3">+3 (hardest conditions)</option>
+            </select>
+          </label>
+          <fieldset class="mode-switch">
+            <legend>Entry mode</legend>
+            <label class="radio"><input type="radio" name="entryMode" value="total" checked> Adjusted gross total</label>
+            <label class="radio"><input type="radio" name="entryMode" value="holes" id="modeHoles"> Hole-by-hole</label>
+          </fieldset>
+          <label id="totalWrap">Adjusted gross score
+            <input type="number" id="scoreTotal" min="18" max="200" step="1" placeholder="e.g. 87">
+            <span class="field-hint">Hole scores capped at net double bogey (par + 5 before you have an index).</span>
+          </label>
+          <div id="holesWrap" class="holes-wrap" hidden></div>
+          <div class="form-preview" id="scorePreview"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Post score</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ HISTORY ============ -->
+    <section class="panel" id="panel-history">
+      <div class="card">
+        <div class="card-head">
+          <h2>Scoring record</h2>
+          <div class="card-tools">
+            <button class="btn btn-ghost" id="exportBtn">Export JSON</button>
+            <label class="btn btn-ghost file-btn">Import<input type="file" id="importFile" accept=".json,application/json" hidden></label>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="score-table" id="historyTable">
+            <thead>
+              <tr>
+                <th>Date</th><th>Course · tee</th><th>AGS</th><th>CR / Slope</th>
+                <th>PCC</th><th>Differential</th><th>HI after</th><th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="hint" id="historyEmpty">No scores yet — post your first round from the Enter score tab. You need 54 holes (3 × 18) for an initial Handicap Index.</p>
+      </div>
+    </section>
+
+    <!-- ============ COURSES ============ -->
+    <section class="panel" id="panel-courses">
+      <div class="card">
+        <div class="card-head">
+          <h2>Courses</h2>
+          <button class="btn btn-primary" id="addCourseBtn">Add course</button>
+        </div>
+        <div id="courseList" class="course-list"></div>
+      </div>
+      <div class="card" id="courseFormCard" hidden>
+        <h2 id="courseFormTitle">Add course</h2>
+        <form id="courseForm" class="form-grid" autocomplete="off">
+          <label>Course name
+            <input type="text" id="courseName" required maxlength="60" placeholder="e.g. Heathside Park GC">
+          </label>
+          <label>Tee name
+            <input type="text" id="teeName" required maxlength="30" placeholder="e.g. White">
+          </label>
+          <label>Par
+            <input type="number" id="teePar" required min="54" max="80" step="1" value="72">
+          </label>
+          <label>Course Rating
+            <input type="number" id="teeCR" required min="50" max="85" step="0.1" placeholder="e.g. 71.2">
+          </label>
+          <label>Slope Rating
+            <input type="number" id="teeSlope" required min="55" max="155" step="1" placeholder="e.g. 128">
+          </label>
+          <details class="holes-details">
+            <summary>Hole details (optional — enables hole-by-hole entry)</summary>
+            <div id="holeInputs" class="holes-wrap"></div>
+          </details>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save tee</button>
+            <button type="button" class="btn btn-ghost" id="cancelCourseBtn">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ CALCULATOR ============ -->
+    <section class="panel" id="panel-calculator">
+      <div class="card">
+        <h2>Course &amp; Playing Handicap calculator</h2>
+        <form class="form-grid" id="calcForm" autocomplete="off">
+          <label>Handicap Index
+            <input type="number" id="calcHI" step="0.1" min="-10" max="54" placeholder="e.g. 12.4">
+          </label>
+          <label>Course
+            <select id="calcCourse"></select>
+          </label>
+          <label>Tee
+            <select id="calcTee"></select>
+          </label>
+          <label>Format allowance
+            <select id="calcAllowance">
+              <option value="95" selected>Individual stroke play — 95%</option>
+              <option value="100">Match play / full — 100%</option>
+              <option value="90">Fourball better ball (stroke) — 90%</option>
+              <option value="85">Fourball match play — 85%</option>
+              <option value="75">Foursomes (combined) — 75%</option>
+              <option value="50">Greensomes (combined) — 50%</option>
+            </select>
+          </label>
+        </form>
+        <div class="calc-result" id="calcResult"></div>
+        <div id="calcStrokes"></div>
+        <p class="hint">Course Handicap = Index × (Slope ÷ 113) + (Course Rating − Par), rounded.
+          Playing Handicap = Course Handicap × allowance, rounded.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Calculations follow the World Handicap System as operated by England Golf (2024 revision):
+      best 8 of last 20 differentials, net double bogey, PCC, exceptional score reductions and the
+      soft/hard caps. Data is stored locally in your browser. This is a personal tracker — your
+      official Handicap Index lives with your club and England Golf / WHS platform.</p>
+  </footer>
+
+  <script src="js/whs.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
