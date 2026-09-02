@@ -1,0 +1,1629 @@
+<title>Fairway</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&display=swap">
+<style>
+/* ================= Fairway Clubhouse — tokens ================= */
+:root {
+  --pine-950: #081f12;
+  --pine-900: #0c2b1a;
+  --pine-800: #144024;
+  --fairway: #2f8a4e;
+  --fairway-strong: #38a35d;
+  --fairway-wash: #dcefe0;
+  --linen: #f2f3ec;
+  --card: #ffffff;
+  --chip: #f8f9f3;
+  --ink: #1a231d;
+  --ink-soft: #5d6d61;
+  --line: #dee2d4;
+  --rule: #b9c2ae;
+  --gold: #c8a63c;
+  --gold-wash: #f5ecd2;
+  --gold-ink: #7d6414;
+  --under: #b3402f;          /* golf leaderboards print under-par in red */
+  --danger: #b3402f;
+  --on-pine: #f2f5ef;
+  --disc: #0c2b1a;
+  --radius: 16px;
+  --shadow: 0 1px 2px rgba(10, 32, 18, .07), 0 8px 24px rgba(10, 32, 18, .07);
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Archivo", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fairway-wash: #1c3c27;
+    --linen: #0d1712;
+    --card: #15211a;
+    --chip: #1a2920;
+    --ink: #e5ebe4;
+    --ink-soft: #97ab9c;
+    --line: #263a2c;
+    --rule: #3b543f;
+    --gold-wash: #383012;
+    --gold-ink: #e0c465;
+    --under: #ee8271;
+    --danger: #ee8271;
+    --disc: #071b0f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 8px 24px rgba(0, 0, 0, .3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fairway-wash: #1c3c27;
+  --linen: #0d1712;
+  --card: #15211a;
+  --chip: #1a2920;
+  --ink: #e5ebe4;
+  --ink-soft: #97ab9c;
+  --line: #263a2c;
+  --rule: #3b543f;
+  --gold-wash: #383012;
+  --gold-ink: #e0c465;
+  --under: #ee8271;
+  --danger: #ee8271;
+  --disc: #071b0f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 8px 24px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  background: var(--linen);
+  color: var(--ink);
+  line-height: 1.5;
+}
+button { font-family: inherit; }
+
+/* ================= header ================= */
+.topbar {
+  background:
+    radial-gradient(120% 180% at 85% -30%, rgba(200, 166, 60, .18), transparent 55%),
+    linear-gradient(155deg, var(--pine-950), var(--pine-800));
+  color: var(--on-pine);
+  padding: 22px 20px 18px;
+}
+.topbar-inner {
+  max-width: 1060px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.brand { display: flex; align-items: baseline; gap: 12px; }
+.brand h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.9rem;
+  letter-spacing: .01em;
+}
+.brand h1 .flag { color: var(--gold); }
+.brand-sub {
+  margin: 0;
+  font-size: .72rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  opacity: .68;
+}
+.me-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 999px;
+  padding: 6px 14px 6px 6px;
+  cursor: pointer;
+  color: var(--on-pine);
+}
+.me-chip:hover { background: rgba(255, 255, 255, .14); }
+.me-chip .me-hi { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+.me-chip .me-name { font-size: .8rem; opacity: .85; }
+
+/* ================= nav ================= */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--linen);
+  border-bottom: 1px solid var(--line);
+}
+.nav-inner {
+  max-width: 1060px;
+  margin: 0 auto;
+  display: flex;
+  gap: 4px;
+  padding: 8px 14px;
+  overflow-x: auto;
+}
+.nav button {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: .88rem;
+  padding: 8px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nav button:hover { color: var(--ink); }
+.nav button.active { background: var(--pine-900); color: var(--on-pine); }
+
+main { max-width: 1060px; margin: 0 auto; padding: 22px 18px 90px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ================= cards & general ================= */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  margin-bottom: 18px;
+}
+h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+.h-sub { font-family: var(--font-body); font-size: .8rem; font-weight: 400; color: var(--ink-soft); }
+.hint { color: var(--ink-soft); font-size: .82rem; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.card-head h2 { margin: 0; }
+
+/* ================= stat tiles ================= */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+}
+.stat-card.disc { background: var(--disc); color: var(--on-pine); border-color: var(--disc); }
+.stat-card.disc .stat-note { color: rgba(242, 245, 239, .65); }
+.stat-label { display: block; font-size: .66rem; text-transform: uppercase; letter-spacing: .13em; opacity: .75; }
+.stat-value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 2.15rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.stat-note { font-size: .74rem; color: var(--ink-soft); }
+
+/* ================= avatars ================= */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  font-size: .78rem;
+  letter-spacing: .02em;
+  flex: none;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .25);
+}
+.avatar.sm { width: 24px; height: 24px; font-size: .6rem; }
+.avatar-stack { display: inline-flex; }
+.avatar-stack .avatar { margin-left: -7px; border: 2px solid var(--card); box-sizing: content-box; }
+.avatar-stack .avatar:first-child { margin-left: 0; }
+
+/* ================= feed ================= */
+.feed { display: grid; gap: 12px; }
+.feed-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 18px;
+}
+.feed-main { min-width: 0; }
+.feed-line1 { font-weight: 600; }
+.feed-line1 .fw-course { color: var(--ink); }
+.feed-line2 { font-size: .8rem; color: var(--ink-soft); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.feed-score { text-align: right; }
+.feed-gross {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.to-par { font-size: .78rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+.to-par.under { color: var(--under); }
+.feed-diff { font-size: .74rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.with-label { font-size: .72rem; color: var(--ink-soft); }
+
+/* ================= friends ================= */
+.friend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.friend-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  cursor: pointer;
+  display: grid;
+  gap: 10px;
+}
+.friend-card:hover { border-color: var(--fairway); }
+.friend-top { display: flex; align-items: center; gap: 12px; }
+.friend-name { font-weight: 700; }
+.friend-you { font-size: .68rem; color: var(--gold-ink); background: var(--gold-wash); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+.friend-hi { margin-left: auto; text-align: right; }
+.friend-hi b { font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; font-variant-numeric: tabular-nums; display: block; line-height: 1.1; }
+.friend-hi span { font-size: .64rem; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); }
+.friend-meta { display: flex; justify-content: space-between; font-size: .76rem; color: var(--ink-soft); }
+.friend-spark svg { display: block; width: 100%; height: 38px; }
+
+/* ================= scorecard tables ================= */
+.table-scroll { overflow-x: auto; }
+table.scorecard { width: 100%; border-collapse: collapse; font-size: .86rem; }
+.scorecard th {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--ink-soft);
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--rule);
+}
+.scorecard td { padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.scorecard td.num { font-variant-numeric: tabular-nums; }
+.badge { display: inline-block; font-size: .66rem; font-weight: 700; border-radius: 999px; padding: 2px 9px; margin-left: 6px; }
+.badge-counting { background: var(--gold-wash); color: var(--gold-ink); }
+.badge-esr { background: var(--fairway-wash); color: var(--fairway); }
+
+/* ================= forms ================= */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.form-grid label { display: flex; flex-direction: column; gap: 5px; font-size: .8rem; font-weight: 600; }
+.form-grid input, .form-grid select {
+  font: inherit;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+}
+.form-grid input:focus, .form-grid select:focus, .nav button:focus-visible, .btn:focus-visible {
+  outline: 2px solid var(--fairway);
+  outline-offset: 1px;
+}
+.field-hint { font-weight: 400; font-size: .72rem; color: var(--ink-soft); }
+.form-actions { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.form-preview { grid-column: 1 / -1; font-size: .86rem; color: var(--fairway); font-weight: 600; min-height: 1.2em; }
+.wide { grid-column: 1 / -1; }
+.mode-switch { grid-column: 1 / -1; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: flex; gap: 20px; flex-wrap: wrap; }
+.mode-switch legend { font-size: .74rem; font-weight: 700; padding: 0 6px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); }
+.radio { flex-direction: row !important; align-items: center; gap: 7px !important; font-weight: 500 !important; }
+
+/* played-with picker */
+.with-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+.with-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  background: var(--chip);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 5px 13px 5px 6px;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.with-chip[aria-pressed="true"] { background: var(--fairway-wash); border-color: var(--fairway); }
+.with-chip .avatar { width: 22px; height: 22px; font-size: .58rem; }
+
+/* holes */
+.holes-wrap { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.hole-box { border: 1px solid var(--line); border-radius: 10px; padding: 7px 8px; background: var(--chip); }
+.hole-box .hole-head { display: flex; justify-content: space-between; font-size: .68rem; color: var(--ink-soft); margin-bottom: 3px; }
+.hole-box input { width: 100%; font: inherit; padding: 5px 6px; border: 1px solid var(--line); border-radius: 7px; text-align: center; background: var(--card); color: var(--ink); }
+.hole-box .hole-meta { display: flex; gap: 4px; }
+.holes-details { grid-column: 1 / -1; }
+.holes-details summary { cursor: pointer; font-size: .84rem; font-weight: 600; margin-bottom: 10px; }
+
+/* ================= buttons ================= */
+.btn { font-weight: 600; border-radius: 10px; padding: 9px 18px; cursor: pointer; border: 1px solid transparent; font-size: .9rem; }
+.btn-primary { background: var(--fairway); color: #fff; }
+.btn-primary:hover { background: var(--fairway-strong); }
+.btn-ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+.btn-ghost:hover { border-color: var(--fairway); }
+.btn-danger { background: transparent; border-color: transparent; color: var(--danger); padding: 4px 8px; }
+.btn-danger:hover { text-decoration: underline; }
+
+/* ================= chart ================= */
+.chart-holder { width: 100%; overflow-x: auto; }
+.chart-holder svg { display: block; width: 100%; height: auto; }
+.chart-empty { color: var(--ink-soft); font-size: .9rem; padding: 22px 0; text-align: center; }
+.diff-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.diff-chip { border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; min-width: 62px; text-align: center; background: var(--chip); }
+.diff-chip.counting { background: var(--gold-wash); border-color: var(--gold); }
+.diff-chip .d { font-weight: 700; font-variant-numeric: tabular-nums; }
+.diff-chip .dt { display: block; font-size: .66rem; color: var(--ink-soft); }
+
+/* ================= course list / calculator ================= */
+.course-list { display: grid; gap: 12px; }
+.course-item { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.course-item h3 { margin: 0 0 6px; font-size: .95rem; font-family: var(--font-display); font-weight: 600; }
+.tee-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 5px 0; font-size: .84rem; flex-wrap: wrap; }
+.tee-facts { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.tee-tag { display: inline-block; background: var(--fairway-wash); color: var(--fairway); border-radius: 7px; font-size: .68rem; font-weight: 700; padding: 1px 7px; margin-left: 6px; }
+.calc-result { display: flex; gap: 14px; flex-wrap: wrap; margin: 16px 0 6px; }
+.calc-pill { background: var(--disc); color: var(--on-pine); border-radius: var(--radius); padding: 12px 22px; text-align: center; min-width: 150px; }
+.calc-pill .cp-label { display: block; font-size: .64rem; text-transform: uppercase; letter-spacing: .11em; opacity: .75; }
+.calc-pill .cp-value { font-family: var(--font-display); font-size: 1.9rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stroke-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 6px; margin-top: 12px; }
+.stroke-cell { border: 1px solid var(--line); border-radius: 8px; text-align: center; padding: 6px 4px; font-size: .78rem; background: var(--chip); }
+.stroke-cell b { display: block; font-size: .92rem; }
+.stroke-cell.gets { background: var(--fairway-wash); border-color: var(--fairway); }
+
+/* ================= overlays ================= */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(8, 25, 15, .55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.overlay-card {
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  max-width: 460px;
+  width: 100%;
+  padding: 26px 26px 24px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.overlay-card h2 { margin-top: 0; }
+.player-pick { display: grid; gap: 8px; margin: 14px 0; }
+.player-pick button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  background: var(--chip);
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.player-pick button:hover { border-color: var(--fairway); }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.swatch[aria-pressed="true"] { border-color: var(--ink); }
+.banner {
+  background: var(--gold-wash);
+  color: var(--gold-ink);
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: .84rem;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+#gate { text-align: center; padding: 60px 20px; color: var(--ink-soft); }
+#gate .gate-mark { font-family: var(--font-display); font-size: 2rem; color: var(--ink); }
+
+.footer { max-width: 1060px; margin: 0 auto; padding: 0 20px 40px; color: var(--ink-soft); font-size: .76rem; }
+.empty-note { color: var(--ink-soft); font-size: .88rem; padding: 16px 0; text-align: center; }
+
+@media (max-width: 640px) {
+  .nav { top: auto; bottom: 0; border-top: 1px solid var(--line); border-bottom: 0; position: fixed; left: 0; right: 0; }
+  .nav-inner { justify-content: space-between; padding: 6px 10px calc(6px + env(safe-area-inset-bottom)); }
+  .nav button { padding: 8px 10px; font-size: .78rem; }
+  main { padding-bottom: 110px; }
+  .stat-value { font-size: 1.7rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .feed-item, .friend-card { transition: border-color .15s ease; }
+}
+</style>
+
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>Fairway<span class="flag">.</span></h1>
+        <p class="brand-sub">Clubhouse · WHS England Golf</p>
+      </div>
+      <button class="me-chip" id="meChip" title="Switch player">
+        <span class="avatar" id="meAvatar">–</span>
+        <span>
+          <span class="me-hi" id="meHi">–</span>
+          <span class="me-name" id="meName">Choose player</span>
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="nav" aria-label="Sections">
+    <div class="nav-inner" id="nav">
+      <button class="active" data-tab="club">Clubhouse</button>
+      <button data-tab="post">Post round</button>
+      <button data-tab="friends">Friends</button>
+      <button data-tab="record">My record</button>
+      <button data-tab="courses">Course book</button>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ============ CLUBHOUSE ============ -->
+    <section class="panel active" id="panel-club">
+      <div id="importBanner"></div>
+      <div class="stat-grid">
+        <div class="stat-card disc">
+          <span class="stat-label">Handicap Index</span>
+          <span class="stat-value" id="statHI">–</span>
+          <span class="stat-note" id="statHINote"></span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Low HI · 365 days</span>
+          <span class="stat-value" id="statLowHI">–</span>
+          <span class="stat-note">soft cap +3.0 · hard cap +5.0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Rounds posted</span>
+          <span class="stat-value" id="statCount">0</span>
+          <span class="stat-note" id="statCountNote"></span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Best differential</span>
+          <span class="stat-value" id="statBest">–</span>
+          <span class="stat-note" id="statBestNote"></span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>Latest rounds <span class="h-sub">across the clubhouse</span></h2>
+        </div>
+        <div class="feed" id="feed"></div>
+        <p class="empty-note" id="feedEmpty" hidden>No rounds posted yet — be the first on the tee.</p>
+      </div>
+    </section>
+
+    <!-- ============ POST ROUND ============ -->
+    <section class="panel" id="panel-post">
+      <div class="card">
+        <h2>Post a round</h2>
+        <form id="scoreForm" class="form-grid" autocomplete="off">
+          <label>Date
+            <input type="date" id="scoreDate" required>
+          </label>
+          <label>Course
+            <select id="scoreCourse" required></select>
+          </label>
+          <label>Tee
+            <select id="scoreTee" required></select>
+          </label>
+          <label>PCC adjustment
+            <select id="scorePCC">
+              <option value="-1">−1 (easier conditions)</option>
+              <option value="0" selected>0 (normal)</option>
+              <option value="1">+1</option>
+              <option value="2">+2</option>
+              <option value="3">+3 (hardest conditions)</option>
+            </select>
+          </label>
+          <fieldset class="mode-switch">
+            <legend>Entry mode</legend>
+            <label class="radio"><input type="radio" name="entryMode" value="total" checked> Adjusted gross total</label>
+            <label class="radio"><input type="radio" name="entryMode" value="holes" id="modeHoles"> Hole-by-hole</label>
+          </fieldset>
+          <label class="wide" id="totalWrap" style="max-width:340px">Adjusted gross score
+            <input type="number" id="scoreTotal" min="18" max="200" step="1" placeholder="e.g. 87">
+            <span class="field-hint">Hole scores capped at net double bogey (par + 5 before you have an index).</span>
+          </label>
+          <div id="holesWrap" class="holes-wrap" hidden></div>
+          <div class="wide">
+            <label style="display:block;margin-bottom:7px">Played with</label>
+            <div class="with-picker" id="withPicker"></div>
+            <p class="field-hint" id="withHint" style="margin:6px 0 0">Tag the friends in your group — their names appear on the round.</p>
+          </div>
+          <div class="form-preview" id="scorePreview"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Post round</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ FRIENDS ============ -->
+    <section class="panel" id="panel-friends">
+      <div class="card" id="friendListCard">
+        <div class="card-head">
+          <h2>Clubhouse members <span class="h-sub">— tap a card for their record</span></h2>
+        </div>
+        <div class="friend-grid" id="friendGrid"></div>
+      </div>
+      <div id="friendDetail" hidden>
+        <div class="card">
+          <div class="card-head">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="avatar" id="fdAvatar"></span>
+              <h2 id="fdName" style="margin:0"></h2>
+            </div>
+            <button class="btn btn-ghost" id="fdBack">Back to members</button>
+          </div>
+          <div class="stat-grid" style="margin-bottom:0">
+            <div class="stat-card disc">
+              <span class="stat-label">Handicap Index</span>
+              <span class="stat-value" id="fdHI">–</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Rounds</span>
+              <span class="stat-value" id="fdCount">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Best differential</span>
+              <span class="stat-value" id="fdBest">–</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Rounds together</span>
+              <span class="stat-value" id="fdTogether">0</span>
+              <span class="stat-note">tagged in the same group</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>Index progression</h2>
+          </div>
+          <div class="chart-holder" id="fdChart" role="img" aria-label="Handicap Index over time"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2 id="fdRoundsTitle">Rounds</h2>
+            <label class="radio" style="display:flex;font-size:.82rem;font-weight:600;gap:7px">
+              <input type="checkbox" id="fdTogetherOnly"> Only rounds we played together
+            </label>
+          </div>
+          <div class="table-scroll">
+            <table class="scorecard" id="fdTable">
+              <thead><tr><th>Date</th><th>Course · tee</th><th>AGS</th><th>Differential</th><th>Played with</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty-note" id="fdEmpty" hidden>No rounds yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MY RECORD ============ -->
+    <section class="panel" id="panel-record">
+      <div class="card">
+        <div class="card-head">
+          <h2>Index progression</h2>
+          <button class="btn btn-ghost" id="exportBtn">Export my record</button>
+        </div>
+        <div class="chart-holder" id="chart" role="img" aria-label="Handicap Index over time"></div>
+      </div>
+      <div class="card">
+        <h2>Latest 20 differentials <span class="h-sub">— the gold 8 make your index</span></h2>
+        <div id="recentDiffs" class="diff-strip"></div>
+      </div>
+      <div class="card">
+        <h2>Scoring record</h2>
+        <div class="table-scroll">
+          <table class="scorecard" id="historyTable">
+            <thead>
+              <tr><th>Date</th><th>Course · tee</th><th>AGS</th><th>CR / Slope</th><th>PCC</th><th>Differential</th><th>HI after</th><th>Played with</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty-note" id="historyEmpty">No rounds yet — you need 54 holes (3 × 18) for an initial Handicap Index.</p>
+      </div>
+    </section>
+
+    <!-- ============ COURSE BOOK ============ -->
+    <section class="panel" id="panel-courses">
+      <div class="card">
+        <div class="card-head">
+          <h2>Course book <span class="h-sub">shared by everyone here</span></h2>
+          <button class="btn btn-primary" id="addCourseBtn">Add course</button>
+        </div>
+        <div id="courseList" class="course-list"></div>
+      </div>
+      <div class="card" id="courseFormCard" hidden>
+        <h2>Add a tee</h2>
+        <form id="courseForm" class="form-grid" autocomplete="off">
+          <label>Course name
+            <input type="text" id="courseName" required maxlength="60" placeholder="e.g. Heathside Park GC">
+          </label>
+          <label>Tee name
+            <input type="text" id="teeName" required maxlength="30" placeholder="e.g. White">
+          </label>
+          <label>Par
+            <input type="number" id="teePar" required min="54" max="80" step="1" value="72">
+          </label>
+          <label>Course Rating
+            <input type="number" id="teeCR" required min="50" max="85" step="0.1" placeholder="e.g. 71.2">
+          </label>
+          <label>Slope Rating
+            <input type="number" id="teeSlope" required min="55" max="155" step="1" placeholder="e.g. 128">
+          </label>
+          <details class="holes-details">
+            <summary>Hole details (optional — enables hole-by-hole entry)</summary>
+            <div id="holeInputs" class="holes-wrap"></div>
+          </details>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save tee</button>
+            <button type="button" class="btn btn-ghost" id="cancelCourseBtn">Cancel</button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Course &amp; Playing Handicap</h2>
+        <form class="form-grid" id="calcForm" autocomplete="off">
+          <label>Handicap Index
+            <input type="number" id="calcHI" step="0.1" min="-10" max="54" placeholder="e.g. 12.4">
+          </label>
+          <label>Course
+            <select id="calcCourse"></select>
+          </label>
+          <label>Tee
+            <select id="calcTee"></select>
+          </label>
+          <label>Format allowance
+            <select id="calcAllowance">
+              <option value="95" selected>Individual stroke play — 95%</option>
+              <option value="100">Match play / full — 100%</option>
+              <option value="90">Fourball better ball (stroke) — 90%</option>
+              <option value="85">Fourball match play — 85%</option>
+              <option value="75">Foursomes (combined) — 75%</option>
+              <option value="50">Greensomes (combined) — 50%</option>
+            </select>
+          </label>
+        </form>
+        <div class="calc-result" id="calcResult"></div>
+        <div id="calcStrokes"></div>
+        <p class="hint">Course Handicap = Index × (Slope ÷ 113) + (Course Rating − Par), rounded.
+          Playing Handicap = Course Handicap × allowance, rounded.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Calculations follow the World Handicap System as operated by England Golf (2024 revision):
+      best 8 of the last 20 differentials, net double bogey, PCC, exceptional score reductions and the
+      soft/hard caps. Rounds, members and courses are shared with everyone who can open this page.
+      This is a friends tracker — your official Handicap Index lives with your club and the
+      England Golf / WHS platform.</p>
+  </footer>
+</div>
+
+<div id="gate" hidden>
+  <p class="gate-mark">Fairway.</p>
+  <p>The clubhouse needs its shared scorebook, which is only available when this page is opened
+    on claude.ai. Open the artifact link in your browser (signed in) and everything will load.</p>
+</div>
+
+<div class="overlay" id="profileOverlay" hidden>
+  <div class="overlay-card">
+    <h2 id="profileTitle">Who's playing?</h2>
+    <p class="hint">Pick yourself, or join the clubhouse. Everyone who opens this page shares the
+      same members list, rounds and course book.</p>
+    <div class="player-pick" id="playerPick"></div>
+    <form id="newPlayerForm" autocomplete="off">
+      <div class="form-grid">
+        <label class="wide">New member name
+          <input type="text" id="newPlayerName" maxlength="30" placeholder="e.g. Dan W">
+        </label>
+        <div class="wide">
+          <label style="display:block;margin-bottom:7px">Tee marker colour</label>
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Join the clubhouse</button>
+          <button type="button" class="btn btn-ghost" id="cancelProfile" hidden>Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+/* @inject:whs */
+</script>
+<script>
+/* Fairway Clubhouse — shared multi-player UI over the artifact db capability. */
+(function () {
+  'use strict';
+
+  var PROFILE_KEY = 'fairway.social.profile';
+  var LEGACY_KEY = 'fairway.whs.v1';
+  var COLORS = ['#2f8a4e', '#3a6ea5', '#b3562f', '#6a4fa3', '#2a8a8a', '#b3567d', '#7d8a2a', '#c8a63c'];
+
+  var db = null;
+  var meId = null;
+  var players = {};          // id -> {name, color}
+  var courses = {};          // id -> {name, tees:[...]}
+  var rounds = [];           // [{id, ...data}]
+  var recordCache = {};      // playerId -> WHS.computeRecord result (per render pass)
+  var viewedFriend = null;
+  var renderQueued = false;
+
+  /* ---------------- helpers ---------------- */
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmt(x, dp) {
+    if (x == null || isNaN(x)) return '–';
+    return Number(x).toFixed(dp == null ? 1 : dp);
+  }
+  function uid(prefix) {
+    return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+  }
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
+      '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function initials(name) {
+    var parts = String(name).trim().split(/\s+/);
+    var s = parts[0].charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : '');
+    return s.toUpperCase();
+  }
+  function avatarHTML(playerId, cls) {
+    var p = players[playerId];
+    var name = p ? p.name : 'Former member';
+    var color = p ? p.color : '#8a8f86';
+    return '<span class="avatar ' + (cls || '') + '" style="background:' + esc(color) +
+      '" title="' + esc(name) + '">' + esc(initials(name)) + '</span>';
+  }
+  function playerName(id) {
+    return players[id] ? players[id].name : 'Former member';
+  }
+  function toParHTML(round) {
+    var d = round.adjustedGross - round.par;
+    var cls = d < 0 ? 'to-par under' : 'to-par';
+    var txt = d === 0 ? 'E' : (d > 0 ? '+' + d : String(d));
+    return '<span class="' + cls + '">' + txt + ' to par</span>';
+  }
+  function tryStore(fn) { try { return fn(); } catch (e) { return null; } }
+
+  function playerRounds(playerId) {
+    return rounds
+      .filter(function (r) { return r.playerId === playerId; })
+      .sort(function (a, b) { return String(a.date).localeCompare(String(b.date)) || String(a.id).localeCompare(String(b.id)); });
+  }
+  function recordFor(playerId) {
+    if (!recordCache[playerId]) {
+      recordCache[playerId] = {
+        rounds: playerRounds(playerId),
+        rec: WHS.computeRecord(playerRounds(playerId))
+      };
+    }
+    return recordCache[playerId];
+  }
+  function togetherRounds(aId, bId) {
+    return rounds.filter(function (r) {
+      var w = r.playedWith || [];
+      return (r.playerId === aId && w.indexOf(bId) >= 0) ||
+             (r.playerId === bId && w.indexOf(aId) >= 0);
+    });
+  }
+
+  /* ---------------- boot / db ---------------- */
+
+  function boot() {
+    var use = (typeof window.claude !== 'undefined' && window.claude && window.claude.use)
+      ? window.claude.use.bind(window.claude) : null;
+    if (!use) return showGate();
+    use('db').then(function (got) {
+      if (!got) return showGate();
+      db = got;
+      document.getElementById('app').hidden = false;
+      meId = tryStore(function () { return localStorage.getItem(PROFILE_KEY); });
+      subscribe();
+    }).catch(showGate);
+  }
+  function showGate() {
+    document.getElementById('gate').hidden = false;
+    document.getElementById('app').hidden = true;
+  }
+
+  function subscribe() {
+    db.collection('players').onSnapshot(function (snap) {
+      players = {};
+      snap.docs.forEach(function (d) {
+        var body = d.data();
+        if (body && body.name) players[d.id] = { name: String(body.name), color: String(body.color || COLORS[0]) };
+      });
+      afterData();
+    }, dbError);
+    db.collection('courses').onSnapshot(function (snap) {
+      courses = {};
+      snap.docs.forEach(function (d) {
+        var body = d.data();
+        if (body && body.name && Array.isArray(body.tees)) courses[d.id] = body;
+      });
+      afterData();
+    }, dbError);
+    db.collection('rounds').orderBy('date', 'desc').limit(1000).onSnapshot(function (snap) {
+      rounds = snap.docs.map(function (d) {
+        var body = d.data() || {};
+        body.id = d.id;
+        return body;
+      }).filter(function (r) { return r.playerId && r.date && typeof r.differential === 'number'; });
+      afterData();
+    }, dbError);
+  }
+  function dbError(e) {
+    console.error('db subscription error', e);
+  }
+
+  function afterData() {
+    recordCache = {};
+    if (meId && !players[meId]) {
+      // profile points at a deleted/foreign player — re-pick
+      meId = null;
+    }
+    if (!meId) showProfileOverlay(false);
+    scheduleRender();
+  }
+  function scheduleRender() {
+    if (renderQueued) return;
+    renderQueued = true;
+    requestAnimationFrame(function () {
+      renderQueued = false;
+      renderAll();
+    });
+  }
+
+  /* ---------------- profile ---------------- */
+
+  var chosenColor = COLORS[0];
+
+  function showProfileOverlay(cancellable) {
+    var overlay = document.getElementById('profileOverlay');
+    overlay.hidden = false;
+    document.getElementById('cancelProfile').hidden = !cancellable;
+    var pick = document.getElementById('playerPick');
+    var ids = Object.keys(players).sort(function (a, b) {
+      return players[a].name.localeCompare(players[b].name);
+    });
+    pick.innerHTML = ids.map(function (id) {
+      return '<button type="button" data-pick="' + esc(id) + '">' + avatarHTML(id) +
+        '<span>' + esc(players[id].name) + '</span></button>';
+    }).join('');
+    renderSwatches();
+  }
+  function renderSwatches() {
+    document.getElementById('swatches').innerHTML = COLORS.map(function (c) {
+      return '<button type="button" class="swatch" style="background:' + c + '" data-color="' + c +
+        '" aria-pressed="' + (c === chosenColor) + '" aria-label="Colour ' + c + '"></button>';
+    }).join('');
+  }
+  document.getElementById('swatches').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-color]');
+    if (!b) return;
+    chosenColor = b.dataset.color;
+    renderSwatches();
+  });
+  document.getElementById('playerPick').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pick]');
+    if (!b) return;
+    setMe(b.dataset.pick);
+  });
+  document.getElementById('newPlayerForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = document.getElementById('newPlayerName').value.trim();
+    if (!name) return;
+    var taken = Object.keys(players).some(function (id) {
+      return players[id].name.toLowerCase() === name.toLowerCase();
+    });
+    if (taken) { alert('There is already a member called ' + name + ' — pick them from the list instead.'); return; }
+    var id = uid('p');
+    db.collection('players').doc(id).set({ name: name, color: chosenColor, createdAt: new Date().toISOString() })
+      .then(function () {
+        players[id] = { name: name, color: chosenColor };
+        setMe(id);
+      })
+      .catch(function (err) { alert('Could not join right now (' + (err && err.code) + '). Try again.'); });
+    document.getElementById('newPlayerName').value = '';
+  });
+  document.getElementById('cancelProfile').addEventListener('click', function () {
+    document.getElementById('profileOverlay').hidden = true;
+  });
+  document.getElementById('meChip').addEventListener('click', function () {
+    showProfileOverlay(!!meId);
+  });
+  function setMe(id) {
+    meId = id;
+    tryStore(function () { localStorage.setItem(PROFILE_KEY, id); });
+    document.getElementById('profileOverlay').hidden = true;
+    recordCache = {};
+    scheduleRender();
+  }
+
+  /* ---------------- legacy import ---------------- */
+
+  function renderImportBanner() {
+    var holder = document.getElementById('importBanner');
+    var legacy = tryStore(function () { return JSON.parse(localStorage.getItem(LEGACY_KEY)); });
+    var mine = meId ? recordFor(meId).rounds : [];
+    if (!meId || !legacy || !Array.isArray(legacy.scores) || !legacy.scores.length || mine.length) {
+      holder.innerHTML = '';
+      return;
+    }
+    holder.innerHTML = '<div class="banner"><span>You have ' + legacy.scores.length +
+      ' round' + (legacy.scores.length === 1 ? '' : 's') +
+      ' saved on this device from the solo version of Fairway.</span>' +
+      '<span><button class="btn btn-primary" id="importLegacy">Add them to my record</button> ' +
+      '<button class="btn btn-ghost" id="dismissLegacy">Dismiss</button></span></div>';
+  }
+  document.getElementById('importBanner').addEventListener('click', function (e) {
+    if (e.target.id === 'dismissLegacy') {
+      tryStore(function () { localStorage.removeItem(LEGACY_KEY); });
+      renderImportBanner();
+    }
+    if (e.target.id === 'importLegacy') {
+      var legacy = tryStore(function () { return JSON.parse(localStorage.getItem(LEGACY_KEY)); });
+      if (!legacy || !Array.isArray(legacy.scores)) return;
+      var writes = legacy.scores.map(function (s) {
+        return db.collection('rounds').doc(uid('r')).set({
+          playerId: meId, date: s.date, courseName: s.courseName, teeName: s.teeName,
+          courseRating: s.courseRating, slopeRating: s.slopeRating, par: s.par,
+          pcc: s.pcc || 0, adjustedGross: s.adjustedGross, differential: s.differential,
+          playedWith: [], createdAt: new Date().toISOString()
+        });
+      });
+      Promise.all(writes).then(function () {
+        tryStore(function () { localStorage.removeItem(LEGACY_KEY); });
+      }).catch(function () { alert('Some rounds could not be imported — try again.'); });
+    }
+  });
+
+  /* ---------------- nav ---------------- */
+
+  document.getElementById('nav').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-tab]');
+    if (!btn) return;
+    switchTab(btn.dataset.tab);
+  });
+  function switchTab(tab) {
+    document.querySelectorAll('#nav button').forEach(function (t) {
+      t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    document.querySelectorAll('.panel').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'panel-' + tab);
+    });
+  }
+
+  /* ---------------- clubhouse ---------------- */
+
+  function renderStats() {
+    var mine = meId ? recordFor(meId) : { rounds: [], rec: { handicapIndex: null, lowHandicapIndex: null, counted: [], scores: [] } };
+    var hi = mine.rec.handicapIndex;
+    document.getElementById('meHi').textContent = hi == null ? 'No HI' : fmt(hi);
+    document.getElementById('meName').textContent = meId ? playerName(meId) : 'Choose player';
+    var meAv = document.getElementById('meAvatar');
+    if (meId && players[meId]) {
+      meAv.style.background = players[meId].color;
+      meAv.textContent = initials(players[meId].name);
+    } else {
+      meAv.style.background = '';
+      meAv.textContent = '–';
+    }
+
+    document.getElementById('statHI').textContent = hi == null ? '–' : fmt(hi);
+    document.getElementById('statHINote').textContent = hi == null
+      ? Math.max(0, 3 - mine.rounds.length) + ' more round' + (3 - mine.rounds.length === 1 ? '' : 's') + ' needed for an index'
+      : 'best 8 of your last ' + Math.min(mine.rounds.length, 20) + ' rounds';
+    document.getElementById('statLowHI').textContent =
+      mine.rec.lowHandicapIndex == null ? '–' : fmt(mine.rec.lowHandicapIndex);
+    document.getElementById('statCount').textContent = mine.rounds.length;
+    document.getElementById('statCountNote').textContent =
+      mine.rounds.length >= 20 ? 'full 20-round record' : (20 - mine.rounds.length) + ' to a full record';
+    var best = null;
+    mine.rounds.forEach(function (r) { if (!best || r.differential < best.differential) best = r; });
+    document.getElementById('statBest').textContent = best ? fmt(best.differential) : '–';
+    document.getElementById('statBestNote').textContent = best ? best.courseName + ' · ' + best.date : '';
+  }
+
+  function renderFeed() {
+    var feed = document.getElementById('feed');
+    var latest = rounds.slice(0, 25);
+    document.getElementById('feedEmpty').hidden = latest.length > 0;
+    feed.innerHTML = latest.map(function (r) {
+      var withHTML = '';
+      if (r.playedWith && r.playedWith.length) {
+        withHTML = '<span class="with-label">with</span><span class="avatar-stack">' +
+          r.playedWith.map(function (id) { return avatarHTML(id, 'sm'); }).join('') + '</span>';
+      }
+      return '<article class="feed-item">' +
+        avatarHTML(r.playerId) +
+        '<div class="feed-main">' +
+        '<div class="feed-line1">' + esc(playerName(r.playerId)) +
+        ' <span class="h-sub">at</span> <span class="fw-course">' + esc(r.courseName) + '</span></div>' +
+        '<div class="feed-line2"><span>' + esc(r.date) + ' · ' + esc(r.teeName) + ' tees</span>' + withHTML + '</div>' +
+        '</div>' +
+        '<div class="feed-score"><div class="feed-gross">' + r.adjustedGross + '</div>' +
+        toParHTML(r) +
+        '<div class="feed-diff">diff ' + fmt(r.differential) + '</div></div>' +
+        '</article>';
+    }).join('');
+  }
+
+  /* ---------------- friends ---------------- */
+
+  function sparklineHTML(playerId) {
+    var data = recordFor(playerId);
+    var pts = [];
+    data.rounds.forEach(function (r, i) {
+      var hi = data.rec.scores[i] && data.rec.scores[i].indexAfter;
+      if (hi != null) pts.push(hi);
+    });
+    if (pts.length < 2) return '<div class="hint">No index yet</div>';
+    pts = pts.slice(-15);
+    var min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+    if (max - min < 1) { max += .5; min -= .5; }
+    var W = 220, H = 38, pad = 4;
+    function x(i) { return pad + (W - 2 * pad) * i / (pts.length - 1); }
+    function y(v) { return pad + (H - 2 * pad) * (1 - (v - min) / (max - min)); }
+    var path = pts.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join(' ');
+    var lastX = x(pts.length - 1).toFixed(1), lastY = y(pts[pts.length - 1]).toFixed(1);
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+      '<path d="' + path + '" fill="none" stroke="var(--fairway)" stroke-width="2"/>' +
+      '<circle cx="' + lastX + '" cy="' + lastY + '" r="3" fill="var(--fairway)"/></svg>';
+  }
+
+  function renderFriends() {
+    var grid = document.getElementById('friendGrid');
+    var ids = Object.keys(players).sort(function (a, b) {
+      if (a === meId) return -1;
+      if (b === meId) return 1;
+      return players[a].name.localeCompare(players[b].name);
+    });
+    if (!ids.length) {
+      grid.innerHTML = '<p class="empty-note">Nobody has joined yet.</p>';
+      return;
+    }
+    grid.innerHTML = ids.map(function (id) {
+      var data = recordFor(id);
+      var last = data.rounds[data.rounds.length - 1];
+      var together = meId && id !== meId ? togetherRounds(meId, id).length : null;
+      return '<div class="friend-card" data-friend="' + esc(id) + '" role="button" tabindex="0">' +
+        '<div class="friend-top">' + avatarHTML(id) +
+        '<span class="friend-name">' + esc(players[id].name) +
+        (id === meId ? '<span class="friend-you">you</span>' : '') + '</span>' +
+        '<span class="friend-hi"><b>' + (data.rec.handicapIndex == null ? '–' : fmt(data.rec.handicapIndex)) +
+        '</b><span>index</span></span></div>' +
+        '<div class="friend-spark">' + sparklineHTML(id) + '</div>' +
+        '<div class="friend-meta"><span>' + data.rounds.length + ' round' + (data.rounds.length === 1 ? '' : 's') + '</span>' +
+        '<span>' + (together != null ? together + ' together' : (last ? 'last: ' + esc(last.date) : 'no rounds yet')) + '</span></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  document.getElementById('friendGrid').addEventListener('click', function (e) {
+    var card = e.target.closest('[data-friend]');
+    if (card) openFriend(card.dataset.friend);
+  });
+  document.getElementById('friendGrid').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var card = e.target.closest('[data-friend]');
+    if (card) { e.preventDefault(); openFriend(card.dataset.friend); }
+  });
+  document.getElementById('fdBack').addEventListener('click', function () {
+    viewedFriend = null;
+    renderFriendDetail();
+  });
+  document.getElementById('fdTogetherOnly').addEventListener('change', renderFriendDetail);
+
+  function openFriend(id) {
+    viewedFriend = id;
+    document.getElementById('fdTogetherOnly').checked = false;
+    renderFriendDetail();
+  }
+
+  function renderFriendDetail() {
+    var detail = document.getElementById('friendDetail');
+    var listCard = document.getElementById('friendListCard');
+    if (!viewedFriend || !players[viewedFriend]) {
+      detail.hidden = true;
+      listCard.hidden = false;
+      return;
+    }
+    detail.hidden = false;
+    listCard.hidden = true;
+    var id = viewedFriend;
+    var data = recordFor(id);
+    var fdAv = document.getElementById('fdAvatar');
+    fdAv.style.background = players[id].color;
+    fdAv.textContent = initials(players[id].name);
+    document.getElementById('fdName').textContent = players[id].name + (id === meId ? ' (you)' : '');
+    document.getElementById('fdHI').textContent = data.rec.handicapIndex == null ? '–' : fmt(data.rec.handicapIndex);
+    document.getElementById('fdCount').textContent = data.rounds.length;
+    var best = null;
+    data.rounds.forEach(function (r) { if (!best || r.differential < best.differential) best = r; });
+    document.getElementById('fdBest').textContent = best ? fmt(best.differential) : '–';
+    document.getElementById('fdTogether').textContent = (meId && id !== meId) ? togetherRounds(meId, id).length : data.rounds.length;
+
+    drawChart(document.getElementById('fdChart'), data);
+
+    var togetherOnly = document.getElementById('fdTogetherOnly').checked;
+    var rows = data.rounds.slice().reverse();
+    if (togetherOnly && meId && id !== meId) {
+      rows = rows.filter(function (r) { return (r.playedWith || []).indexOf(meId) >= 0; });
+    }
+    document.getElementById('fdEmpty').hidden = rows.length > 0;
+    document.querySelector('#fdTable tbody').innerHTML = rows.map(function (r) {
+      var withNames = (r.playedWith || []).map(playerName).map(esc).join(', ') || '—';
+      return '<tr><td>' + esc(r.date) + '</td><td>' + esc(r.courseName) + ' · ' + esc(r.teeName) + '</td>' +
+        '<td class="num">' + r.adjustedGross + ' ' + toParHTML(r) + '</td>' +
+        '<td class="num"><strong>' + fmt(r.differential) + '</strong></td>' +
+        '<td>' + withNames + '</td></tr>';
+    }).join('');
+  }
+
+  /* ---------------- my record ---------------- */
+
+  function drawChart(holder, data) {
+    var points = [];
+    data.rounds.forEach(function (r, i) {
+      var hi = data.rec.scores[i] && data.rec.scores[i].indexAfter;
+      if (hi != null) points.push({ date: r.date, hi: hi });
+    });
+    if (points.length < 2) {
+      holder.innerHTML = '<p class="chart-empty">The index progression appears here after an established Handicap Index (3 rounds).</p>';
+      return;
+    }
+    var W = 900, H = 250, padL = 46, padR = 16, padT = 14, padB = 30;
+    var his = points.map(function (p) { return p.hi; });
+    var min = Math.floor(Math.min.apply(null, his)) - 1;
+    var max = Math.ceil(Math.max.apply(null, his)) + 1;
+    if (max - min < 4) max = min + 4;
+    function x(i) { return padL + (W - padL - padR) * (points.length === 1 ? .5 : i / (points.length - 1)); }
+    function y(v) { return padT + (H - padT - padB) * (1 - (v - min) / (max - min)); }
+    var grid = '', labels = '';
+    for (var g = 0; g <= 4; g++) {
+      var val = min + (max - min) * g / 4, gy = y(val);
+      grid += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="var(--line)" stroke-width="1"/>';
+      labels += '<text x="' + (padL - 8) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="11" fill="var(--ink-soft)">' + val.toFixed(1) + '</text>';
+    }
+    var path = points.map(function (p, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.hi).toFixed(1); }).join(' ');
+    var dots = points.map(function (p, i) {
+      return '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.hi).toFixed(1) + '" r="3.5" fill="var(--fairway)">' +
+        '<title>' + esc(p.date) + ' — HI ' + fmt(p.hi) + '</title></circle>';
+    }).join('');
+    var xl = '<text x="' + padL + '" y="' + (H - 8) + '" font-size="11" fill="var(--ink-soft)">' + esc(points[0].date) + '</text>' +
+      '<text x="' + (W - padR) + '" y="' + (H - 8) + '" text-anchor="end" font-size="11" fill="var(--ink-soft)">' + esc(points[points.length - 1].date) + '</text>';
+    holder.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
+      grid + labels + xl + '<path d="' + path + '" fill="none" stroke="var(--fairway)" stroke-width="2.5" stroke-linejoin="round"/>' + dots + '</svg>';
+  }
+
+  function renderRecord() {
+    var mine = meId ? recordFor(meId) : null;
+    var holder = document.getElementById('chart');
+    if (!mine || !mine.rounds.length) {
+      holder.innerHTML = '<p class="chart-empty">Post rounds to build your record.</p>';
+      document.getElementById('recentDiffs').innerHTML = '<p class="hint">No rounds recorded yet.</p>';
+      document.querySelector('#historyTable tbody').innerHTML = '';
+      document.getElementById('historyEmpty').hidden = false;
+      return;
+    }
+    drawChart(holder, mine);
+
+    var counted = {};
+    mine.rec.counted.forEach(function (i) { counted[i] = true; });
+
+    var chrono = mine.rounds;   // chronological; indexes match rec.scores
+    var latest = chrono.map(function (r, i) { return { r: r, calc: mine.rec.scores[i], i: i }; })
+      .slice(-20).reverse();
+    document.getElementById('recentDiffs').innerHTML = latest.map(function (v) {
+      var cls = 'diff-chip' + (counted[v.i] ? ' counting' : '');
+      return '<div class="' + cls + '" title="' + esc(v.r.courseName) + '">' +
+        '<span class="d">' + fmt(v.calc.adjustedDifferential) + '</span>' +
+        '<span class="dt">' + esc(String(v.r.date).slice(5)) + '</span></div>';
+    }).join('');
+
+    var rows = chrono.map(function (r, i) { return { r: r, calc: mine.rec.scores[i], i: i }; }).reverse();
+    document.getElementById('historyEmpty').hidden = rows.length > 0;
+    document.querySelector('#historyTable tbody').innerHTML = rows.map(function (v) {
+      var badges = '';
+      if (counted[v.i]) badges += '<span class="badge badge-counting">counting</span>';
+      if (v.calc.esr) badges += '<span class="badge badge-esr">ESR ' + v.calc.esr.toFixed(1) + '</span>';
+      var withNames = (v.r.playedWith || []).map(playerName).map(esc).join(', ') || '—';
+      return '<tr>' +
+        '<td>' + esc(v.r.date) + '</td>' +
+        '<td>' + esc(v.r.courseName) + ' · ' + esc(v.r.teeName) + badges + '</td>' +
+        '<td class="num">' + v.r.adjustedGross + '</td>' +
+        '<td class="num">' + v.r.courseRating + ' / ' + v.r.slopeRating + '</td>' +
+        '<td class="num">' + (v.r.pcc > 0 ? '+' + v.r.pcc : (v.r.pcc || 0)) + '</td>' +
+        '<td class="num"><strong>' + fmt(v.calc.adjustedDifferential) + '</strong>' +
+        (v.calc.esr ? ' <span class="hint">(' + fmt(v.r.differential) + ')</span>' : '') + '</td>' +
+        '<td class="num">' + fmt(v.calc.indexAfter) + '</td>' +
+        '<td>' + withNames + '</td>' +
+        '<td><button class="btn btn-danger" data-del="' + esc(v.r.id) + '">Delete</button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  document.querySelector('#historyTable tbody').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-del]');
+    if (!btn) return;
+    if (!confirm('Delete this round for everyone? Your Handicap Index will be recalculated.')) return;
+    db.collection('rounds').doc(btn.dataset.del).delete().catch(function () {
+      alert('Could not delete the round — try again.');
+    });
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', function () {
+    if (!meId) return;
+    var mine = recordFor(meId);
+    var json = JSON.stringify({ player: playerName(meId), rounds: mine.rounds }, null, 2);
+    var filename = 'fairway-' + playerName(meId).toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + todayISO() + '.json';
+    window.claude.use('downloads').then(function (downloads) {
+      if (!downloads) throw { code: 'unavailable' };
+      return downloads.save({ filename: filename, data: json });
+    }).catch(function (err) {
+      if (err && err.code === 'declined') return;
+      alert('Export is not available in this view.');
+    });
+  });
+
+  /* ---------------- post round ---------------- */
+
+  var scoreCourseSel = document.getElementById('scoreCourse');
+  var scoreTeeSel = document.getElementById('scoreTee');
+  var holesWrap = document.getElementById('holesWrap');
+  var selectedWith = {};
+
+  function courseIds() {
+    return Object.keys(courses).sort(function (a, b) { return courses[a].name.localeCompare(courses[b].name); });
+  }
+  function fillCourseSelect(sel) {
+    var prev = sel.value;
+    sel.innerHTML = courseIds().map(function (id) {
+      return '<option value="' + esc(id) + '">' + esc(courses[id].name) + '</option>';
+    }).join('');
+    if (prev && courses[prev]) sel.value = prev;
+  }
+  function fillTeeSelect(sel, course) {
+    var prev = sel.value;
+    sel.innerHTML = course ? course.tees.map(function (t, i) {
+      return '<option value="' + i + '">' + esc(t.name) + ' — CR ' + t.courseRating +
+        ', Slope ' + t.slopeRating + ', Par ' + t.par + '</option>';
+    }).join('') : '';
+    if (prev && course && course.tees[prev]) sel.value = prev;
+  }
+  function currentEntryTee() {
+    var course = courses[scoreCourseSel.value];
+    var tee = course ? course.tees[parseInt(scoreTeeSel.value, 10)] : null;
+    return { course: course, tee: tee || null };
+  }
+  function entryMode() {
+    return document.querySelector('input[name="entryMode"]:checked').value;
+  }
+  function myCourseHandicap(tee) {
+    var rec = meId ? recordFor(meId).rec : null;
+    if (!rec || rec.handicapIndex == null) return null;
+    return WHS.courseHandicap(rec.handicapIndex, tee.slopeRating, tee.courseRating, tee.par);
+  }
+
+  function renderWithPicker() {
+    var picker = document.getElementById('withPicker');
+    var ids = Object.keys(players).filter(function (id) { return id !== meId; })
+      .sort(function (a, b) { return players[a].name.localeCompare(players[b].name); });
+    document.getElementById('withHint').textContent = ids.length
+      ? 'Tag the friends in your group — their names appear on the round.'
+      : 'When friends join the clubhouse, you can tag who you played with.';
+    picker.innerHTML = ids.map(function (id) {
+      return '<button type="button" class="with-chip" data-with="' + esc(id) +
+        '" aria-pressed="' + !!selectedWith[id] + '">' + avatarHTML(id) +
+        '<span>' + esc(players[id].name) + '</span></button>';
+    }).join('');
+  }
+  document.getElementById('withPicker').addEventListener('click', function (e) {
+    var chip = e.target.closest('[data-with]');
+    if (!chip) return;
+    var id = chip.dataset.with;
+    if (selectedWith[id]) delete selectedWith[id]; else selectedWith[id] = true;
+    chip.setAttribute('aria-pressed', !!selectedWith[id]);
+  });
+
+  function renderEntryHoles() {
+    var sel = currentEntryTee();
+    var modeHolesRadio = document.getElementById('modeHoles');
+    var hasHoles = !!(sel.tee && sel.tee.holes && sel.tee.holes.length === 18);
+    modeHolesRadio.disabled = !hasHoles;
+    if (!hasHoles && entryMode() === 'holes') {
+      document.querySelector('input[name="entryMode"][value="total"]').checked = true;
+    }
+    var holesMode = entryMode() === 'holes' && hasHoles;
+    holesWrap.hidden = !holesMode;
+    document.getElementById('totalWrap').hidden = holesMode;
+    if (holesMode) {
+      var ch = myCourseHandicap(sel.tee);
+      holesWrap.innerHTML = sel.tee.holes.map(function (h, i) {
+        var cap = ch == null ? h.par + 5 : WHS.netDoubleBogey(h.par, ch, h.strokeIndex);
+        return '<div class="hole-box"><div class="hole-head"><span>H' + (i + 1) +
+          '</span><span>Par ' + h.par + ' · SI ' + h.strokeIndex + '</span></div>' +
+          '<input type="number" min="1" max="20" step="1" data-hole="' + i +
+          '" placeholder="max ' + cap + '" aria-label="Hole ' + (i + 1) + ' strokes"></div>';
+      }).join('');
+    }
+    updateScorePreview();
+  }
+
+  function gatherEntry() {
+    var sel = currentEntryTee();
+    if (!sel.tee) return null;
+    var pcc = parseInt(document.getElementById('scorePCC').value, 10) || 0;
+    var ags = null;
+    if (entryMode() === 'holes' && sel.tee.holes) {
+      var ch = myCourseHandicap(sel.tee);
+      var inputs = holesWrap.querySelectorAll('input[data-hole]');
+      var any = false;
+      var holes = sel.tee.holes.map(function (h, i) {
+        var v = parseInt(inputs[i] ? inputs[i].value : '', 10);
+        if (v > 0) any = true;
+        return { par: h.par, strokeIndex: h.strokeIndex, strokes: v > 0 ? v : null };
+      });
+      if (any) {
+        ags = ch == null
+          ? holes.reduce(function (t, h) {
+              var cap = h.par + 5;
+              return t + (h.strokes == null ? cap : Math.min(h.strokes, cap));
+            }, 0)
+          : WHS.adjustedGrossScore(holes, ch);
+      }
+    } else {
+      var v = parseInt(document.getElementById('scoreTotal').value, 10);
+      if (v > 0) ags = v;
+    }
+    return { course: sel.course, tee: sel.tee, pcc: pcc, ags: ags };
+  }
+
+  function updateScorePreview() {
+    var box = document.getElementById('scorePreview');
+    var entry = gatherEntry();
+    if (!entry || entry.ags == null) { box.textContent = ''; return; }
+    var sd = WHS.scoreDifferential({
+      adjustedGross: entry.ags, courseRating: entry.tee.courseRating,
+      slopeRating: entry.tee.slopeRating, pcc: entry.pcc
+    });
+    box.textContent = 'Adjusted gross ' + entry.ags + ' → score differential ' + fmt(sd);
+  }
+
+  document.getElementById('scoreForm').addEventListener('input', function (e) {
+    if (e.target.name === 'entryMode') renderEntryHoles();
+    else updateScorePreview();
+  });
+  scoreCourseSel.addEventListener('change', function () {
+    fillTeeSelect(scoreTeeSel, courses[scoreCourseSel.value]);
+    renderEntryHoles();
+  });
+  scoreTeeSel.addEventListener('change', renderEntryHoles);
+
+  document.getElementById('scoreForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!meId) { showProfileOverlay(false); return; }
+    var date = document.getElementById('scoreDate').value;
+    var entry = gatherEntry();
+    if (!date || !entry || entry.ags == null) { alert('Enter a date and a score first.'); return; }
+    var sd = WHS.scoreDifferential({
+      adjustedGross: entry.ags, courseRating: entry.tee.courseRating,
+      slopeRating: entry.tee.slopeRating, pcc: entry.pcc
+    });
+    var form = this;
+    db.collection('rounds').doc(uid('r')).set({
+      playerId: meId, date: date,
+      courseName: entry.course.name, teeName: entry.tee.name,
+      courseRating: entry.tee.courseRating, slopeRating: entry.tee.slopeRating, par: entry.tee.par,
+      pcc: entry.pcc, adjustedGross: entry.ags, differential: sd,
+      playedWith: Object.keys(selectedWith),
+      createdAt: new Date().toISOString()
+    }).then(function () {
+      form.reset();
+      selectedWith = {};
+      document.getElementById('scoreDate').value = todayISO();
+      renderWithPicker();
+      renderEntryHoles();
+      switchTab('club');
+    }).catch(function (err) {
+      alert('Could not post the round (' + (err && err.code) + '). Try again.');
+    });
+  });
+
+  /* ---------------- course book ---------------- */
+
+  function renderCourses() {
+    var list = document.getElementById('courseList');
+    var ids = courseIds();
+    if (!ids.length) {
+      list.innerHTML = '<p class="empty-note">No courses yet — add the ones you play, with ratings from the scorecard.</p>';
+      return;
+    }
+    list.innerHTML = ids.map(function (id) {
+      var c = courses[id];
+      var tees = c.tees.map(function (t) {
+        return '<div class="tee-row"><span><strong>' + esc(t.name) + '</strong>' +
+          (t.holes ? '<span class="tee-tag">hole data</span>' : '') + '</span>' +
+          '<span class="tee-facts">Par ' + t.par + ' · CR ' + t.courseRating + ' · Slope ' + t.slopeRating + '</span></div>';
+      }).join('');
+      return '<div class="course-item"><h3>' + esc(c.name) + '</h3>' + tees + '</div>';
+    }).join('');
+  }
+
+  function renderHoleInputs() {
+    var wrap = document.getElementById('holeInputs');
+    var cells = '';
+    for (var i = 0; i < 18; i++) {
+      cells += '<div class="hole-box"><div class="hole-head"><span>H' + (i + 1) + '</span><span>par / SI</span></div>' +
+        '<div class="hole-meta">' +
+        '<input type="number" min="3" max="6" step="1" data-par="' + i + '" placeholder="4" aria-label="Hole ' + (i + 1) + ' par">' +
+        '<input type="number" min="1" max="18" step="1" data-si="' + i + '" placeholder="' + (i + 1) + '" aria-label="Hole ' + (i + 1) + ' stroke index">' +
+        '</div></div>';
+    }
+    wrap.innerHTML = cells;
+  }
+  document.getElementById('addCourseBtn').addEventListener('click', function () {
+    document.getElementById('courseFormCard').hidden = false;
+    renderHoleInputs();
+    document.getElementById('courseName').focus();
+  });
+  document.getElementById('cancelCourseBtn').addEventListener('click', function () {
+    document.getElementById('courseFormCard').hidden = true;
+    document.getElementById('courseForm').reset();
+  });
+  document.getElementById('courseForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = document.getElementById('courseName').value.trim();
+    var teeName = document.getElementById('teeName').value.trim();
+    var par = parseInt(document.getElementById('teePar').value, 10);
+    var cr = parseFloat(document.getElementById('teeCR').value);
+    var slope = parseInt(document.getElementById('teeSlope').value, 10);
+    if (!name || !teeName || !(par >= 54) || isNaN(cr) || !(slope >= 55 && slope <= 155)) {
+      alert('Check the tee details — slope must be 55–155.');
+      return;
+    }
+    var holes = null, pars = [], sis = [], filled = 0;
+    for (var i = 0; i < 18; i++) {
+      var p = parseInt(document.querySelector('[data-par="' + i + '"]').value, 10);
+      var s = parseInt(document.querySelector('[data-si="' + i + '"]').value, 10);
+      if (p > 0 && s > 0) filled++;
+      pars.push(p); sis.push(s);
+    }
+    if (filled > 0) {
+      if (filled < 18) { alert('Fill in par and stroke index for all 18 holes, or leave them all blank.'); return; }
+      var seen = {};
+      for (var j = 0; j < 18; j++) {
+        if (sis[j] < 1 || sis[j] > 18 || seen[sis[j]]) { alert('Stroke indexes must be 1–18, each used once.'); return; }
+        seen[sis[j]] = true;
+      }
+      var parSum = pars.reduce(function (a, b) { return a + b; }, 0);
+      if (parSum !== par) { alert('Hole pars add up to ' + parSum + ' but the tee par is ' + par + '.'); return; }
+      holes = pars.map(function (pp, k) { return { par: pp, strokeIndex: sis[k] }; });
+    }
+    var existingId = courseIds().find(function (id) { return courses[id].name.toLowerCase() === name.toLowerCase(); });
+    var newTee = { name: teeName, par: par, courseRating: cr, slopeRating: slope, holes: holes };
+    var form = this;
+    var write;
+    if (existingId) {
+      var updated = JSON.parse(JSON.stringify(courses[existingId]));
+      updated.tees.push(newTee);
+      write = db.collection('courses').doc(existingId).set(updated);
+    } else {
+      write = db.collection('courses').doc(uid('c')).set({ name: name, tees: [newTee] });
+    }
+    write.then(function () {
+      form.reset();
+      document.getElementById('courseFormCard').hidden = true;
+    }).catch(function (err) {
+      alert('Could not save the course (' + (err && err.code) + '). Try again.');
+    });
+  });
+
+  /* ---------------- calculator ---------------- */
+
+  var calcCourseSel = document.getElementById('calcCourse');
+  var calcTeeSel = document.getElementById('calcTee');
+
+  function renderCalc() {
+    var out = document.getElementById('calcResult');
+    var strokesOut = document.getElementById('calcStrokes');
+    var hiInput = document.getElementById('calcHI');
+    var hi = parseFloat(hiInput.value);
+    var myRec = meId ? recordFor(meId).rec : null;
+    if (isNaN(hi) && myRec && myRec.handicapIndex != null) {
+      hi = myRec.handicapIndex;
+      hiInput.placeholder = 'your index: ' + fmt(myRec.handicapIndex);
+    }
+    var course = courses[calcCourseSel.value];
+    var tee = course ? course.tees[parseInt(calcTeeSel.value, 10)] : null;
+    if (isNaN(hi) || !tee) {
+      out.innerHTML = '<p class="hint">' + (isNaN(hi)
+        ? 'Enter a Handicap Index (or post rounds to use your own).' : 'Pick a course and tee.') + '</p>';
+      strokesOut.innerHTML = '';
+      return;
+    }
+    var ch = WHS.courseHandicap(hi, tee.slopeRating, tee.courseRating, tee.par);
+    var allowance = parseInt(document.getElementById('calcAllowance').value, 10);
+    var ph = WHS.playingHandicap(ch, allowance);
+    out.innerHTML =
+      '<div class="calc-pill"><span class="cp-label">Course Handicap</span><span class="cp-value">' + ch + '</span></div>' +
+      '<div class="calc-pill"><span class="cp-label">Playing Handicap · ' + allowance + '%</span><span class="cp-value">' + ph + '</span></div>';
+    if (tee.holes && tee.holes.length === 18) {
+      strokesOut.innerHTML = '<h2 style="margin-top:18px">Strokes received by hole</h2><div class="stroke-grid">' +
+        tee.holes.map(function (h, i) {
+          var st = WHS.strokesOnHole(ch, h.strokeIndex);
+          return '<div class="stroke-cell' + (st > 0 ? ' gets' : '') + '"><b>' + (i + 1) + '</b>' +
+            (st === 0 ? '—' : (st > 0 ? '+' + st : st)) + '</div>';
+        }).join('') + '</div>';
+    } else {
+      strokesOut.innerHTML = '';
+    }
+  }
+  document.getElementById('calcForm').addEventListener('input', function (e) {
+    if (e.target === calcCourseSel) fillTeeSelect(calcTeeSel, courses[calcCourseSel.value]);
+    renderCalc();
+  });
+
+  /* ---------------- render root ---------------- */
+
+  function renderAll() {
+    renderStats();
+    renderFeed();
+    renderFriends();
+    renderFriendDetail();
+    renderRecord();
+    renderCourses();
+    renderImportBanner();
+    renderWithPicker();
+    fillCourseSelect(scoreCourseSel);
+    fillTeeSelect(scoreTeeSel, courses[scoreCourseSel.value]);
+    fillCourseSelect(calcCourseSel);
+    fillTeeSelect(calcTeeSel, courses[calcCourseSel.value]);
+    renderEntryHoles();
+    renderCalc();
+  }
+
+  document.getElementById('scoreDate').value = todayISO();
+  boot();
+})();
+</script>
