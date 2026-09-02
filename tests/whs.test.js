@@ -56,13 +56,108 @@ test('net double bogey caps hole scores', () => {
   assert.strictEqual(WHS.netDoubleBogey(3, 0, 10), 5);
 });
 
-test('adjusted gross applies NDB per hole and to pick-ups', () => {
+test('adjusted gross: NDB caps played holes, net par for holes not played', () => {
   const holes = [
-    { par: 4, strokeIndex: 1, strokes: 9 },    // capped at 4+2+1 = 7
-    { par: 3, strokeIndex: 18, strokes: 3 },   // kept
-    { par: 5, strokeIndex: 9, strokes: null }  // pick-up -> NDB = 8
+    { par: 4, strokeIndex: 1, strokes: 9 },    // played, capped at 4+2+1 = 7
+    { par: 3, strokeIndex: 18, strokes: 3 },   // played, kept
+    { par: 5, strokeIndex: 9, strokes: null }  // not played -> net par = 5+1 = 6
   ];
-  assert.strictEqual(WHS.adjustedGrossScore(holes, 14), 18);
+  assert.strictEqual(WHS.adjustedGrossScore(holes, 14), 16);
+});
+
+test('adjusted gross: started but not holed out takes net double bogey', () => {
+  const holes = [{ par: 5, strokeIndex: 9, strokes: 0 }]; // 5+2+1
+  assert.strictEqual(WHS.adjustedGrossScore(holes, 14), 8);
+});
+
+test('net par adds only the strokes received', () => {
+  assert.strictEqual(WHS.netPar(4, 14, 5), 5);
+  assert.strictEqual(WHS.netPar(4, 0, 5), 4);
+  assert.strictEqual(WHS.netPar(4, 20, 2), 6);
+});
+
+test('minus score differentials round upward toward zero (Rule 5.1c)', () => {
+  assert.strictEqual(WHS.roundTenth(-1.54), -1.5);
+  assert.strictEqual(WHS.roundTenth(-1.55), -1.5);
+  assert.strictEqual(WHS.roundTenth(-1.56), -1.6);
+  assert.strictEqual(WHS.roundTenth(11.55), 11.6);
+});
+
+test('9-hole differential halves the PCC and stays unrounded (Rule 5.1b)', () => {
+  // (113/127) x (41 - 34.6 - 0.5) = 0.889763 x 5.9 = 5.24960...
+  const sd = WHS.nineHoleDifferential({
+    adjustedGross9: 41, courseRating9: 34.6, slopeRating9: 127, pcc: 1
+  });
+  assert.ok(Math.abs(sd - 5.2496063) < 1e-6, 'got ' + sd);
+});
+
+test('expected 9-hole differential matches the USGA worked example', () => {
+  // HI 14.0 + 9-hole differential 7.2 -> 18-hole differential 15.7
+  assert.strictEqual(WHS.expectedNineDifferential(14.0), 8.5);
+  assert.strictEqual(WHS.nineToEighteenDifferential(7.2, 14.0), 15.7);
+});
+
+test('9-hole differential mirrors itself with no index yet', () => {
+  assert.strictEqual(WHS.nineToEighteenDifferential(9.4, null), 18.8);
+});
+
+test('9-hole course handicap halves the index (Rule 6.1b)', () => {
+  // (12.0/2) x (127/113) + (34.6 - 35) = 6.343 -> 6
+  assert.strictEqual(WHS.courseHandicap9(12.0, 127, 34.6, 35), 6);
+});
+
+test('stableford points per hole', () => {
+  // par 4, SI 5, CH 14 -> 1 stroke received
+  assert.strictEqual(WHS.stablefordPointsForHole(5, 4, 14, 5), 2);  // net par
+  assert.strictEqual(WHS.stablefordPointsForHole(4, 4, 14, 5), 3);  // net birdie
+  assert.strictEqual(WHS.stablefordPointsForHole(3, 4, 14, 5), 4);  // net eagle
+  assert.strictEqual(WHS.stablefordPointsForHole(6, 4, 14, 5), 1);  // net bogey
+  assert.strictEqual(WHS.stablefordPointsForHole(7, 4, 14, 5), 0);  // net double
+  assert.strictEqual(WHS.stablefordPointsForHole(9, 4, 14, 5), 0);  // never negative
+  assert.strictEqual(WHS.stablefordPointsForHole(null, 4, 14, 5), 0);
+});
+
+test('net double bogey is the lowest score worth zero stableford points', () => {
+  const ndb = WHS.netDoubleBogey(4, 14, 5);
+  assert.strictEqual(WHS.stablefordPointsForHole(ndb, 4, 14, 5), 0);
+  assert.strictEqual(WHS.stablefordPointsForHole(ndb - 1, 4, 14, 5), 1);
+});
+
+test('stableford points convert back to an adjusted gross', () => {
+  // 36 points off a playing handicap of 13 on a par 71 = played to handicap
+  assert.strictEqual(WHS.stablefordToAdjustedGross({ points: 36, par: 71, handicap: 13 }), 84);
+  assert.strictEqual(WHS.stablefordToAdjustedGross({ points: 40, par: 71, handicap: 13 }), 80);
+  assert.strictEqual(WHS.stablefordToAdjustedGross({ points: 30, par: 71, handicap: 13 }), 90);
+  // 9 holes: par points is 18
+  assert.strictEqual(WHS.stablefordToAdjustedGross({ points: 18, par: 35, handicap: 6, holes: 9 }), 41);
+});
+
+test('computeRecord scales a 9-hole score against the index in effect', () => {
+  const scores = [];
+  for (let i = 0; i < 5; i++) {
+    scores.push({ date: '2026-01-0' + (i + 1), differential: 20.0 });
+  }
+  // after 5 scores of 20.0 the index is 20.0 (lowest 1, no adjustment)
+  scores.push({ date: '2026-01-10', nineDifferential: 7.0 });
+  const rec = WHS.computeRecord(scores);
+  const nine = rec.scores[5];
+  assert.ok(nine.nineHole, 'flagged as a 9-hole round');
+  // expected 9-hole for HI 20.0 = 11.5 -> 18-hole differential 18.5
+  assert.strictEqual(nine.differential, 18.5);
+  assert.strictEqual(nine.adjustedDifferential, 18.5);
+});
+
+test('a 9-hole round can count toward the index', () => {
+  const scores = [];
+  for (let i = 0; i < 5; i++) {
+    scores.push({ date: '2026-02-0' + (i + 1), differential: 25.0 });
+  }
+  scores.push({ date: '2026-02-10', nineDifferential: 4.0 });
+  const rec = WHS.computeRecord(scores);
+  // HI in effect 25.0 -> expected 14.0 -> 18-hole differential 18.0, the
+  // lowest of six, so it counts (best 2 of 6, adjustment -1.0)
+  assert.strictEqual(rec.scores[5].differential, 18.0);
+  assert.ok(rec.counted.indexOf(5) >= 0, 'the 9-hole round is in the counting set');
 });
 
 test('selection table matches the WHS schedule', () => {

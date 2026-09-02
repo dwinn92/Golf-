@@ -13,9 +13,14 @@
   var HARD_CAP_THRESHOLD = 5.0; // above Low HI, growth is stopped entirely
   var LOW_HI_WINDOW_DAYS = 365;
 
-  /** Round to the nearest tenth, half away from zero (WHS convention). */
+  /**
+   * Round to the nearest tenth, ties upward (toward +infinity).
+   * Rule 5.1c: minus Score Differentials round upward towards 0 —
+   * -1.54 -> -1.5, -1.55 -> -1.5, -1.56 -> -1.6. JS Math.round rounds
+   * halves toward +infinity, which is exactly this rule.
+   */
   function roundTenth(x) {
-    return Math.sign(x) * Math.round(Math.abs(x) * 10) / 10;
+    return Math.round(x * 10) / 10;
   }
 
   /** Round to the nearest whole number, half upward (Course/Playing Handicap). */
@@ -70,27 +75,152 @@
     return strokeIndex > 18 - give ? -1 : 0;
   }
 
-  /** Maximum hole score for handicapping: Net Double Bogey. */
+  /** Maximum hole score for handicapping: Net Double Bogey (Rule 3.1b). */
   function netDoubleBogey(par, courseHcp, strokeIndex) {
     return par + 2 + strokesOnHole(courseHcp, strokeIndex);
   }
 
   /**
+   * Net par for a hole: the score recorded for a hole NOT PLAYED, where the
+   * Association permits net par in place of an expected score (Rule 3.2b/2).
+   * Distinct from net double bogey, which caps a hole that WAS played.
+   */
+  function netPar(par, courseHcp, strokeIndex) {
+    return par + strokesOnHole(courseHcp, strokeIndex);
+  }
+
+  /**
    * Adjusted Gross Score from hole-by-hole scores.
-   * holes: [{par, strokeIndex, strokes}] — strokes null/0 means "hole not
-   * played / picked up", which for an acceptable score counts as net double
-   * bogey (net par would apply to holes not played; NDB to pick-ups — we use
-   * NDB, the score-entry convention England Golf uses for picked-up holes).
+   *
+   * holes: [{par, strokeIndex, strokes}] where `strokes` is
+   *   - a number   : the hole was played and holed out; capped at net double
+   *                  bogey (Rule 3.1b);
+   *   - 0          : the hole was STARTED but not holed out — net double
+   *                  bogey (Rule 3.3);
+   *   - null       : the hole was NOT PLAYED — net par (Rule 3.2b/2, the
+   *                  net-par option in place of an automated expected score).
+   *
+   * The distinction matters: a picked-up hole and a hole never played take
+   * different scores under the Rules.
    */
   function adjustedGrossScore(holes, courseHcp) {
     var total = 0;
     for (var i = 0; i < holes.length; i++) {
       var h = holes[i];
-      var cap = netDoubleBogey(h.par, courseHcp, h.strokeIndex);
-      var s = (h.strokes == null || h.strokes === 0) ? cap : Math.min(h.strokes, cap);
-      total += s;
+      if (h.strokes == null) {
+        total += netPar(h.par, courseHcp, h.strokeIndex);
+      } else {
+        var cap = netDoubleBogey(h.par, courseHcp, h.strokeIndex);
+        total += h.strokes === 0 ? cap : Math.min(h.strokes, cap);
+      }
     }
     return total;
+  }
+
+  /* ---------------- 9-hole scores (Rule 5.1b) ---------------- */
+
+  /**
+   * 9-hole Score Differential, left UNROUNDED (Rule 5.1b):
+   *   (113 / 9-hole Slope) x (9-hole AGS - 9-hole Course Rating - 0.5 x PCC)
+   * Note the PCC is halved for a 9-hole round.
+   */
+  function nineHoleDifferential(opts) {
+    var pcc = opts.pcc || 0;
+    return (113 / opts.slopeRating9) *
+      (opts.adjustedGross9 - opts.courseRating9 - 0.5 * pcc);
+  }
+
+  /**
+   * Expected 9-hole Score Differential for a player of the given Handicap
+   * Index — the value combined with a played 9-hole differential to make an
+   * 18-hole Score Differential (Rule 5.1b).
+   *
+   * IMPORTANT: the Rules of Handicapping state that this expected score is
+   * "automated" (Clarification 3.2b/1) and do NOT publish the underlying
+   * model, which is derived from the WHS scoring database. This is therefore
+   * an approximation, not the official figure.
+   *
+   * The model used here is expected 18-hole differential = HI + 3.0 (a
+   * Handicap Index is the mean of the best 8 of the last 20 differentials,
+   * which sits about three strokes below the mean of all 20), halved for
+   * 9 holes. It reproduces the USGA's published worked example exactly:
+   * a player of HI 14.0 with a 9-hole differential of 7.2 is credited with
+   * an 18-hole differential of 15.7, i.e. an expected 9-hole value of 8.5,
+   * and (14.0 + 3.0) / 2 = 8.5.
+   *
+   * Returns null when there is no Handicap Index to base it on.
+   */
+  function expectedNineDifferential(handicapIndex) {
+    if (handicapIndex == null) return null;
+    return (handicapIndex + 3.0) / 2;
+  }
+
+  /**
+   * Combine a played 9-hole differential with the expected differential for
+   * the 9 holes not played, giving an 18-hole Score Differential rounded to
+   * one decimal (Rule 5.1b).
+   *
+   * With no Handicap Index yet, there is no expected score to draw on, so the
+   * played 9 is mirrored (the 18-hole differential is twice the 9-hole one).
+   */
+  function nineToEighteenDifferential(nineDifferential, handicapIndex) {
+    var expected = expectedNineDifferential(handicapIndex);
+    return roundTenth(nineDifferential + (expected == null ? nineDifferential : expected));
+  }
+
+  /**
+   * 9-hole Course Handicap (Rule 6.1b):
+   *   (HI / 2) x (9-hole Slope / 113) + (9-hole Course Rating - 9-hole par)
+   */
+  function courseHandicap9(handicapIndex, slopeRating9, courseRating9, par9, opts) {
+    var ch = (handicapIndex / 2) * (slopeRating9 / 113) + (courseRating9 - par9);
+    return (opts && opts.unrounded) ? ch : roundWhole(ch);
+  }
+
+  /* ---------------- Stableford ---------------- */
+
+  /**
+   * Stableford points for one hole against the strokes received:
+   * 2 for a net par, 3 net birdie, 4 net eagle, 1 net bogey, 0 for net double
+   * bogey or worse. A net double bogey is by definition the lowest score
+   * scoring zero points, which is what makes Stableford self-capping.
+   */
+  function stablefordPointsForHole(strokes, par, courseHcp, strokeIndex) {
+    if (strokes == null || strokes === 0) return 0;
+    var net = strokes - strokesOnHole(courseHcp, strokeIndex);
+    return Math.max(0, 2 - (net - par));
+  }
+
+  /** Total Stableford points for a hole-by-hole card. */
+  function stablefordPoints(holes, courseHcp) {
+    var total = 0;
+    for (var i = 0; i < holes.length; i++) {
+      total += stablefordPointsForHole(
+        holes[i].strokes, holes[i].par, courseHcp, holes[i].strokeIndex);
+    }
+    return total;
+  }
+
+  /**
+   * Reconstruct an Adjusted Gross Score from a Stableford points total, for a
+   * card signed for in points rather than strokes.
+   *
+   * A player scoring the par of the round in points (36 over 18 holes, 18 over
+   * 9) has played to their handicap, i.e. shot par + handicap; every point
+   * above that is one stroke better:
+   *   AGS = par + handicap + parPoints - points
+   *
+   * `handicap` must be the handicap the points were computed against — in a
+   * UK club competition that is the Playing Handicap (95% of Course Handicap
+   * for individual Stableford), not the Course Handicap.
+   *
+   * Because Stableford already scores zero for anything worse than a net
+   * double bogey, the result is inherently net-double-bogey adjusted.
+   */
+  function stablefordToAdjustedGross(opts) {
+    var holes = opts.holes == null ? 18 : opts.holes;
+    var parPoints = holes === 9 ? 18 : 36;
+    return Math.round(opts.par + opts.handicap + parPoints - opts.points);
   }
 
   /**
@@ -169,7 +299,10 @@
   /**
    * Recompute the full scoring record chronologically.
    *
-   * scores: [{date: 'YYYY-MM-DD', differential: number}] in any order.
+   * scores: [{date: 'YYYY-MM-DD', differential: number}] in any order, or for
+   * a 9-hole round [{date, nineDifferential: number}] carrying the unrounded
+   * 9-hole Score Differential, which is scaled to 18 holes here against the
+   * index in effect when it was played.
    * Returns {
    *   scores: same order as input, each annotated with
    *     {adjustedDifferential, esr, indexAfter, exceptional},
@@ -189,6 +322,7 @@
       });
 
     var esr = order.map(function () { return 0; });     // cumulative ESR per score
+    var resolved = order.map(function () { return 0; }); // 18-hole differential
     var results = scores.map(function () { return null; });
     var history = [];                                    // {time, hi} after each round
     var reached20 = false;
@@ -199,8 +333,15 @@
     for (var k = 0; k < order.length; k++) {
       var sc = order[k].s;
 
+      // A 9-hole score becomes an 18-hole Score Differential by combining it
+      // with the expected score for the 9 holes not played, based on the
+      // Handicap Index in effect when the round was played (Rule 5.1b).
+      resolved[k] = (sc.nineDifferential != null)
+        ? nineToEighteenDifferential(sc.nineDifferential, currentHI)
+        : sc.differential;
+
       // Exceptional score check against the index in effect when played.
-      var reduction = exceptionalReduction(sc.differential, currentHI);
+      var reduction = exceptionalReduction(resolved[k], currentHI);
       if (reduction !== 0) {
         var from = Math.max(0, k - 19);
         for (var j = from; j <= k; j++) esr[j] += reduction;
@@ -208,7 +349,7 @@
 
       var adjusted = [];
       for (var m = 0; m <= k; m++) {
-        adjusted.push(roundTenth(order[m].s.differential + esr[m]));
+        adjusted.push(roundTenth(resolved[m] + esr[m]));
       }
 
       var raw = rawIndexFromDifferentials(adjusted);
@@ -240,7 +381,9 @@
       lastCounted = raw.counted.map(function (w) { return order[w].i; });
 
       results[order[k].i] = {
-        adjustedDifferential: roundTenth(sc.differential + esr[k]),
+        differential: resolved[k],
+        nineHole: sc.nineDifferential != null,
+        adjustedDifferential: roundTenth(resolved[k] + esr[k]),
         esr: esr[k],
         exceptional: reduction !== 0,
         indexAfter: hi
@@ -263,7 +406,15 @@
     playingHandicap: playingHandicap,
     strokesOnHole: strokesOnHole,
     netDoubleBogey: netDoubleBogey,
+    netPar: netPar,
     adjustedGrossScore: adjustedGrossScore,
+    nineHoleDifferential: nineHoleDifferential,
+    expectedNineDifferential: expectedNineDifferential,
+    nineToEighteenDifferential: nineToEighteenDifferential,
+    courseHandicap9: courseHandicap9,
+    stablefordPointsForHole: stablefordPointsForHole,
+    stablefordPoints: stablefordPoints,
+    stablefordToAdjustedGross: stablefordToAdjustedGross,
     selectionTable: selectionTable,
     rawIndexFromDifferentials: rawIndexFromDifferentials,
     applyCaps: applyCaps,

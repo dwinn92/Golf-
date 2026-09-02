@@ -197,7 +197,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   color: var(--green);
   flex: none;
 }
-.rowlist .listrow {
+.listrow {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -533,6 +533,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
   <!-- ============ HOME ============ -->
   <section class="screen active" id="screen-home">
+    <div id="draftBanner"></div>
     <div class="home-head">
       <div class="hh-club">
         <span class="label">Home club</span>
@@ -585,6 +586,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     </div>
     <div style="padding:0 22px" class="rowlist" id="homeClubFeed"></div>
     <div id="importBanner"></div>
+    <div id="offlineBanner"></div>
   </section>
 
   <!-- ============ ROUNDS ============ -->
@@ -594,6 +596,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       <div class="seg" style="margin-top:14px">
         <button id="segHistory" aria-pressed="true">History</button>
         <button id="segTrend" aria-pressed="false">Trend</button>
+        <button id="segResults" aria-pressed="false">Results</button>
       </div>
     </div>
 
@@ -608,6 +611,14 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       </div>
       <div style="padding:8px 22px 14px" id="historyList"></div>
       <p class="footer-note" id="historyEmpty" hidden>No rounds yet. You need 54 holes (3 × 18) for an initial Handicap Index.</p>
+    </div>
+
+    <div id="roundsResults" hidden>
+      <div class="eyebrow" style="padding:6px 22px 4px">Head to head</div>
+      <div style="padding:0 22px" id="h2hList"></div>
+      <div class="eyebrow" style="padding:22px 22px 4px">Rounds together</div>
+      <div style="padding:0 22px 14px" id="groupList"></div>
+      <p class="footer-note" id="resultsEmpty" hidden>Tag who you played with when you post a round and the net results will appear here.</p>
     </div>
 
     <div id="roundsTrend" hidden>
@@ -709,9 +720,9 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
         <span class="sr-label">Home club</span>
         <span class="sr-val"><span id="setHomeClubVal">—</span><span class="sr-chev">›</span></span>
       </button>
-      <button class="set-row" id="setEntryMode">
-        <span class="sr-label">Score entry</span>
-        <span class="sr-val"><span id="setEntryModeVal">TOTAL</span><span class="sr-chev">›</span></span>
+      <button class="set-row" id="setCDH">
+        <span class="sr-label">CDH number</span>
+        <span class="sr-val"><span id="setCDHVal">NOT SET</span><span class="sr-chev">›</span></span>
       </button>
       <button class="set-row" id="setExport">
         <span class="sr-label">Export scores</span>
@@ -758,9 +769,17 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
         </select>
       </label>
     </div>
-    <div style="padding:16px 22px 0" id="entryModeSeg">
+    <div style="padding:16px 22px 0">
+      <div class="seg" id="holesSeg">
+        <button data-holes="18" aria-pressed="true">18 holes</button>
+        <button data-holes="front" aria-pressed="false">Front 9</button>
+        <button data-holes="back" aria-pressed="false">Back 9</button>
+      </div>
+    </div>
+    <div style="padding:10px 22px 0" id="entryModeSeg">
       <div class="seg">
-        <button id="modeTotal" aria-pressed="true">Total score</button>
+        <button id="modeTotal" aria-pressed="true">Gross</button>
+        <button id="modeStableford" aria-pressed="false">Stableford</button>
         <button id="modeHoles" aria-pressed="false">Hole by hole</button>
       </div>
     </div>
@@ -812,6 +831,24 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
         </div>
       </div>
       <div style="margin:14px 22px 0" class="softnote">Enter your adjusted gross — hole scores capped at net double bogey (par + 5 before you have an index).</div>
+    </div>
+
+    <div id="entryStableford" hidden>
+      <div class="gross-card card24">
+        <div class="gc-main">
+          <div class="label" style="font-size:9.5px">Stableford points</div>
+          <div class="gc-input">
+            <input type="number" id="pointsInput" min="0" max="60" step="1" placeholder="36" aria-label="Stableford points">
+            <span class="gc-topar num" id="pointsVsPar"></span>
+          </div>
+        </div>
+        <div class="gc-cells">
+          <div class="gc-cell"><div class="label" style="font-size:9.5px">Playing h'cap</div><div class="gv num" id="sfPH">–</div></div>
+          <div class="gc-cell"><div class="label" style="font-size:9.5px">Adjusted gross</div><div class="gv num" id="sfGross">–</div></div>
+          <div class="gc-cell"><div class="label" style="font-size:9.5px">Differential</div><div class="gv green num" id="sfDiff">–</div></div>
+        </div>
+      </div>
+      <div style="margin:14px 22px 0" class="softnote" id="sfNote">Points are converted to an adjusted gross using your Playing Handicap (95%). Stableford scores zero for anything worse than a net double bogey, so the score is already adjusted.</div>
     </div>
 
     <div class="with-strip">
@@ -886,6 +923,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   'use strict';
 
   var PROFILE_KEY = 'fairway.social.profile';
+  var DRAFT_KEY = 'fairway.draft';
   var PREFS_KEY = 'fairway.prefs';
   var LEGACY_KEY = 'fairway.whs.v1';
   var COLORS = ['#1F6B4A', '#3a6ea5', '#b3562f', '#6a4fa3', '#2a8a8a', '#b3567d', '#7d8a2a', '#c8a63c'];
@@ -900,6 +938,8 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   var trendRange = '20';
   var renderQueued = false;
   var teePickTarget = null; // 'entry' | 'home'
+  var roundsView = 'history';
+  var pendingWrites = [];   // rounds queued while offline
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -955,6 +995,52 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     return { course: c, tee: c.tees[prefs.teeIdx] };
   }
 
+  /**
+   * Ratings for a 9-hole round over one half of an 18-hole tee.
+   * Clubs publish separate 9-hole Course and Slope Ratings; when the tee
+   * carries them we use them, otherwise we fall back to half the 18-hole
+   * Course Rating and the same Slope Rating, and say so in the UI.
+   */
+  function nineRatings(tee, half) {
+    var explicit = half === 'front' ? tee.front9 : tee.back9;
+    if (explicit && explicit.courseRating && explicit.slopeRating) {
+      return { courseRating: explicit.courseRating, slopeRating: explicit.slopeRating,
+        par: explicit.par || halfPar(tee, half), exact: true };
+    }
+    return {
+      courseRating: Math.round(tee.courseRating * 10 / 2) / 10,
+      slopeRating: tee.slopeRating,
+      par: halfPar(tee, half),
+      exact: false
+    };
+  }
+  function halfPar(tee, half) {
+    if (tee.holes && tee.holes.length === 18) {
+      var hs = half === 'front' ? tee.holes.slice(0, 9) : tee.holes.slice(9);
+      return hs.reduce(function (t, h) { return t + h.par; }, 0);
+    }
+    return Math.round(tee.par / 2);
+  }
+  /** The holes of the current entry: all 18, the front 9 or the back 9. */
+  function entryHoleSet(tee) {
+    if (!tee.holes || tee.holes.length !== 18) return null;
+    if (!entry || entry.holes18 === 18) return tee.holes;
+    return entry.holes18 === 'front' ? tee.holes.slice(0, 9) : tee.holes.slice(9);
+  }
+  function entryIsNine() { return entry && entry.holes18 !== 18; }
+  /** Par and ratings in force for the current entry (9- or 18-hole). */
+  function entryRatings() {
+    var sel = selectedTee();
+    if (!sel) return null;
+    if (!entryIsNine()) {
+      return { par: sel.tee.par, courseRating: sel.tee.courseRating,
+        slopeRating: sel.tee.slopeRating, exact: true, nine: false };
+    }
+    var r = nineRatings(sel.tee, entry.holes18);
+    r.nine = true;
+    return r;
+  }
+
   /* ---------------- boot ---------------- */
 
   function boot() {
@@ -969,6 +1055,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       var p = tryStore(function () { return JSON.parse(localStorage.getItem(PREFS_KEY)); });
       if (p && typeof p === 'object') prefs = { courseId: p.courseId || null, teeIdx: p.teeIdx | 0 };
       subscribe();
+      flushPending();
     }).catch(showGate);
   }
   function showGate() { $('gate').hidden = false; $('app').hidden = true; }
@@ -979,7 +1066,10 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       players = {};
       snap.docs.forEach(function (d) {
         var b = d.data();
-        if (b && b.name) players[d.id] = { name: String(b.name), color: String(b.color || COLORS[0]) };
+        if (b && b.name) players[d.id] = {
+          name: String(b.name), color: String(b.color || COLORS[0]),
+          cdh: b.cdh ? String(b.cdh) : ''
+        };
       });
       afterData();
     }, dbErr);
@@ -1090,7 +1180,11 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       ? ' · W/ ' + (r.playedWith || []).map(function (id) { return initials(playerName(id)); }).join(' ')
       : '';
     var comp = r.compType === 'competition' ? 'COMPETITION' : 'GENERAL PLAY';
-    var meta = fmtRevised(r.date) + ' · ' + String(r.teeName || '').toUpperCase() + ' · ' + comp + withTxt;
+    var bits = [fmtRevised(r.date), String(r.teeName || '').toUpperCase()];
+    if (r.holesPlayed === 9) bits.push(r.nineOf === 'back' ? 'BACK 9' : 'FRONT 9');
+    if (r.scoringFormat === 'stableford') bits.push('STABLEFORD');
+    bits.push(comp);
+    var meta = bits.join(' · ') + withTxt;
     var title = opts.showPlayer ? playerName(r.playerId) + ' · ' + r.courseName : r.courseName;
     return '<button class="listrow" data-round="' + esc(r.id) + '">' +
       (opts.dots ? '<div class="cdot" style="background:' + (counting ? 'var(--green)' : 'var(--bar-idle)') + '"></div>' : '') +
@@ -1205,12 +1299,16 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
   $('segHistory').addEventListener('click', function () { setRoundsView('history'); });
   $('segTrend').addEventListener('click', function () { setRoundsView('trend'); });
+  $('segResults').addEventListener('click', function () { setRoundsView('results'); });
   function setRoundsView(v) {
+    roundsView = v;
     $('segHistory').setAttribute('aria-pressed', String(v === 'history'));
     $('segTrend').setAttribute('aria-pressed', String(v === 'trend'));
+    $('segResults').setAttribute('aria-pressed', String(v === 'results'));
     $('roundsHistory').hidden = v !== 'history';
     $('roundsTrend').hidden = v !== 'trend';
-    $('roundsTitle').textContent = v === 'history' ? 'Rounds' : 'Trend';
+    $('roundsResults').hidden = v !== 'results';
+    $('roundsTitle').textContent = v === 'history' ? 'Rounds' : (v === 'trend' ? 'Trend' : 'Results');
   }
   $('historyChips').addEventListener('click', function (e) {
     var b = e.target.closest('[data-filter]');
@@ -1391,8 +1489,12 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     });
     $('courseBook').innerHTML = ids.length ? ids.map(function (id) {
       var c = courses[id];
+      var confirmed = c.tees.reduce(function (n, t) {
+        return n + (((t.confirmedBy || []).length) ? 1 : 0);
+      }, 0);
       var meta = c.tees.map(function (t) { return t.name.toUpperCase(); }).join(' · ') +
-        ' · PAR ' + (c.tees[0] ? c.tees[0].par : '–');
+        ' · PAR ' + (c.tees[0] ? c.tees[0].par : '–') +
+        (confirmed ? ' · ' + confirmed + '/' + c.tees.length + ' CONFIRMED' : '');
       return '<button class="dirrow" data-book="' + esc(id) + '">' +
         '<span class="d-main"><span class="d-name">' + esc(c.name) + '</span>' +
         '<span class="d-meta" style="display:block">' + esc(meta) + '</span></span>' +
@@ -1458,12 +1560,21 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     var c = courses[selectedBookCourse];
     if (bookTeeSel >= c.tees.length) bookTeeSel = 0;
     var tee = c.tees[bookTeeSel];
+    var confirmedBy = (tee && tee.confirmedBy) || [];
+    var iConfirmed = meId && confirmedBy.indexOf(meId) >= 0;
+    var verifyLine = confirmedBy.length
+      ? 'RATINGS CONFIRMED BY ' + confirmedBy.length + ' MEMBER' + (confirmedBy.length === 1 ? '' : 'S')
+      : 'RATINGS NOT YET CONFIRMED';
     wrap.innerHTML = '<div class="course-sel">' +
       '<div class="cs-head"><div class="cs-name">' + esc(c.name) + '</div>' +
       '<div class="cs-meta">' + (tee && tee.holes ? '18 HOLES · ' : '') + 'PAR ' + (tee ? tee.par : '–') + ' · SELECT A TEE</div></div>' +
       '<div class="tee-cols"><span style="flex:1">TEE</span><span style="width:46px;text-align:right">CR</span>' +
       '<span style="width:40px;text-align:right">SR</span><span style="width:44px;text-align:right">C.H\'CAP</span></div>' +
       teeTableHTML(selectedBookCourse, bookTeeSel, 'data-booktee') +
+      '<div style="padding:12px 18px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">' +
+      '<span class="cs-meta" style="margin:0">' + verifyLine + '</span>' +
+      (meId ? '<button class="d-act" id="confirmTeeBtn" style="font-size:10.5px">' +
+        (iConfirmed ? 'CONFIRMED BY YOU' : 'CONFIRM FROM MY CARD') + '</button>' : '') + '</div>' +
       '<div style="padding:14px 18px"><button class="cta green" id="useTeeBtn">Use ' +
       esc(tee ? tee.name.toLowerCase() : '') + ' tees</button></div></div>';
   }
@@ -1477,6 +1588,18 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   $('courseSelWrap').addEventListener('click', function (e) {
     var t = e.target.closest('[data-booktee]');
     if (t) { bookTeeSel = parseInt(t.dataset.booktee, 10); renderCourseSel(); return; }
+    if (e.target.closest('#confirmTeeBtn')) {
+      var c0 = courses[selectedBookCourse];
+      if (!c0 || !meId) return;
+      var updated = JSON.parse(JSON.stringify(c0));
+      var tee0 = updated.tees[bookTeeSel];
+      tee0.confirmedBy = tee0.confirmedBy || [];
+      var at = tee0.confirmedBy.indexOf(meId);
+      if (at >= 0) tee0.confirmedBy.splice(at, 1); else tee0.confirmedBy.push(meId);
+      db.collection('courses').doc(selectedBookCourse).set(updated)
+        .catch(function () { alert('Could not save the confirmation.'); });
+      return;
+    }
     if (e.target.closest('#useTeeBtn')) {
       prefs.courseId = selectedBookCourse;
       prefs.teeIdx = bookTeeSel;
@@ -1542,7 +1665,8 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       holes = pars.map(function (pp, k) { return { par: pp, strokeIndex: sis[k] }; });
     }
     var newTee = { name: teeName, par: par, courseRating: cr, slopeRating: sr, holes: holes,
-      yards: (yards >= 1000 && yards <= 8500) ? yards : null };
+      yards: (yards >= 1000 && yards <= 8500) ? yards : null,
+      confirmedBy: meId ? [meId] : [] };
     var existingId = courseIds().find(function (id) { return courses[id].name.toLowerCase() === name.toLowerCase(); });
     var write;
     if (existingId) {
@@ -1600,69 +1724,160 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
   var entry = null;
 
-  function openEntry() {
+  function openEntry(draft) {
     if (!meId) { showProfileOverlay(false); return; }
     if (!selectedTee()) { switchNav('courses'); return; }
-    entry = {
-      mode: 'total', compType: 'general',
+    entry = draft || {
+      mode: 'total', compType: 'general', holes18: 18,
       date: todayISO(), pcc: 0,
-      holes: [], cur: 0, playedWith: {}
+      holes: [], cur: 0, playedWith: {}, gross: '', points: ''
     };
     $('entryDate').value = entry.date;
-    $('entryPCC').value = '0';
-    $('grossInput').value = '';
+    $('entryPCC').value = String(entry.pcc);
+    $('grossInput').value = entry.gross || '';
+    $('pointsInput').value = entry.points || '';
     $('entryScreen').hidden = false;
     window.scrollTo(0, 0);
     syncEntryCtx();
   }
-  function closeEntry() { $('entryScreen').hidden = true; entry = null; }
-  $('fabBtn').addEventListener('click', openEntry);
-  $('entryCancel').addEventListener('click', closeEntry);
+  function closeEntry(keepDraft) {
+    $('entryScreen').hidden = true;
+    if (!keepDraft) clearDraft();
+    entry = null;
+    scheduleRender();
+  }
+
+  /* ---- drafts: an in-progress round survives leaving the page ---- */
+
+  function saveDraft() {
+    if (!entry) return;
+    var scored = entry.holes.filter(function (x) { return x != null; }).length;
+    // only worth keeping once something has actually been entered
+    if (!scored && !entry.gross && !entry.points) { clearDraft(); return; }
+    tryStore(function () {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        entry: entry, courseId: prefs.courseId, teeIdx: prefs.teeIdx,
+        playerId: meId, savedAt: new Date().toISOString()
+      }));
+    });
+  }
+  function clearDraft() { tryStore(function () { localStorage.removeItem(DRAFT_KEY); }); }
+  function loadDraft() {
+    var d = tryStore(function () { return JSON.parse(localStorage.getItem(DRAFT_KEY)); });
+    if (!d || !d.entry || d.playerId !== meId) return null;
+    if (!courses[d.courseId] || !courses[d.courseId].tees[d.teeIdx]) return null;
+    return d;
+  }
+  function renderDraftBanner() {
+    var holder = $('draftBanner');
+    var d = (!entry) ? loadDraft() : null;
+    if (!d) { holder.innerHTML = ''; return; }
+    var scored = (d.entry.holes || []).filter(function (x) { return x != null; }).length;
+    var where = courses[d.courseId].name;
+    var what = scored ? scored + ' hole' + (scored === 1 ? '' : 's') + ' in'
+      : (d.entry.points ? d.entry.points + ' points entered' : d.entry.gross + ' entered');
+    holder.innerHTML = '<div class="banner-note"><span>Round in progress at ' + esc(where) +
+      ' — ' + esc(what) + '.</span><span><button id="resumeDraft">Resume</button> ' +
+      '<button id="discardDraft">Discard</button></span></div>';
+  }
+  $('draftBanner').addEventListener('click', function (e) {
+    if (e.target.id === 'discardDraft') { clearDraft(); renderDraftBanner(); return; }
+    if (e.target.id === 'resumeDraft') {
+      var d = loadDraft();
+      if (!d) return;
+      prefs.courseId = d.courseId; prefs.teeIdx = d.teeIdx; savePrefs();
+      openEntry(d.entry);
+      renderDraftBanner();
+    }
+  });
+  $('fabBtn').addEventListener('click', function () { openEntry(loadDraft() ? loadDraft().entry : null); });
+  $('entryCancel').addEventListener('click', function () {
+    // leaving a part-scored round keeps it as a draft rather than binning it
+    var scored = entry && entry.holes.filter(function (x) { return x != null; }).length;
+    if (scored || (entry && (entry.gross || entry.points))) { saveDraft(); closeEntry(true); }
+    else closeEntry(false);
+  });
   $('entryCtx').addEventListener('click', function () { openTeePick('entry'); });
 
   function entryCH() {
+    var r = entryRatings();
+    var hi = myHI();
+    if (!r || hi == null) return null;
+    return r.nine
+      ? WHS.courseHandicap9(hi, r.slopeRating, r.courseRating, r.par)
+      : WHS.courseHandicap(hi, r.slopeRating, r.courseRating, r.par);
+  }
+  /**
+   * Strokes received per hole during a 9-hole round come from the equivalent
+   * 18-hole Course Handicap, since stroke indexes run 1..18 across the card.
+   */
+  function entryStrokeCH() {
     var sel = selectedTee();
     var hi = myHI();
     if (!sel || hi == null) return null;
     return WHS.courseHandicap(hi, sel.tee.slopeRating, sel.tee.courseRating, sel.tee.par);
   }
   function holeCap(hole) {
-    var ch = entryCH();
+    var ch = entryStrokeCH();
     return ch == null ? hole.par + 5 : WHS.netDoubleBogey(hole.par, ch, hole.strokeIndex);
   }
 
   function syncEntryCtx() {
     if (!entry) return;
     var sel = selectedTee();
+    var r = entryRatings();
     $('ctxName').textContent = sel ? sel.course.name : 'Pick a course';
-    $('ctxMeta').textContent = sel
-      ? sel.tee.name.toUpperCase() + ' · CR ' + sel.tee.courseRating + ' · SR ' + sel.tee.slopeRating +
-        (sel.tee.yards ? ' · ' + Number(sel.tee.yards).toLocaleString('en-GB') + ' YDS' : '')
+    $('ctxMeta').textContent = sel && r
+      ? sel.tee.name.toUpperCase() + ' · ' + (r.nine ? (entry.holes18 === 'front' ? 'FRONT 9' : 'BACK 9') : '18 HOLES') +
+        ' · CR ' + r.courseRating + ' · SR ' + r.slopeRating + ' · PAR ' + r.par +
+        (r.nine && !r.exact ? ' · EST' : '')
       : '';
+    document.querySelectorAll('#holesSeg button').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(String(entry.holes18) === b.dataset.holes));
+    });
     var hasHoles = !!(sel && sel.tee.holes && sel.tee.holes.length === 18);
     $('modeHoles').disabled = !hasHoles;
     $('modeHoles').style.opacity = hasHoles ? '' : '.4';
-    if (!hasHoles) entry.mode = 'total';
-    if (entry.mode === 'holes' && entry.holes.length !== 18) {
-      entry.holes = sel.tee.holes.map(function () { return null; });
+    if (!hasHoles && entry.mode === 'holes') entry.mode = 'total';
+    var want = entryHoleSet(sel.tee);
+    if (entry.mode === 'holes' && want && entry.holes.length !== want.length) {
+      entry.holes = want.map(function () { return null; });
       entry.cur = 0;
     }
     renderEntry();
   }
 
+  document.getElementById('holesSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-holes]');
+    if (!b || !entry) return;
+    var v = b.dataset.holes === '18' ? 18 : b.dataset.holes;
+    if (v === entry.holes18) return;
+    entry.holes18 = v;
+    entry.holes = [];
+    entry.cur = 0;
+    syncEntryCtx();
+    saveDraft();
+  });
+
   $('modeTotal').addEventListener('click', function () { if (entry) { entry.mode = 'total'; renderEntry(); } });
+  $('modeStableford').addEventListener('click', function () { if (entry) { entry.mode = 'stableford'; renderEntry(); } });
   $('modeHoles').addEventListener('click', function () {
     if (!entry || this.disabled) return;
     entry.mode = 'holes';
-    var sel = selectedTee();
-    if (entry.holes.length !== 18) entry.holes = sel.tee.holes.map(function () { return null; });
+    var want = entryHoleSet(selectedTee().tee);
+    if (want && entry.holes.length !== want.length) entry.holes = want.map(function () { return null; });
     renderEntry();
+  });
+  $('pointsInput').addEventListener('input', function () {
+    if (entry) { entry.points = this.value; renderEntryPreviewOnly(); saveDraft(); }
   });
   $('compGeneral').addEventListener('click', function () { if (entry) { entry.compType = 'general'; renderEntry(); } });
   $('compComp').addEventListener('click', function () { if (entry) { entry.compType = 'competition'; renderEntry(); } });
-  $('entryDate').addEventListener('input', function () { if (entry) entry.date = this.value; });
-  $('entryPCC').addEventListener('input', function () { if (entry) { entry.pcc = parseInt(this.value, 10) || 0; renderEntry(); } });
-  $('grossInput').addEventListener('input', renderEntryPreviewOnly);
+  $('entryDate').addEventListener('input', function () { if (entry) { entry.date = this.value; saveDraft(); } });
+  $('entryPCC').addEventListener('input', function () { if (entry) { entry.pcc = parseInt(this.value, 10) || 0; renderEntry(); saveDraft(); } });
+  $('grossInput').addEventListener('input', function () {
+    if (entry) { entry.gross = this.value; renderEntryPreviewOnly(); saveDraft(); }
+  });
 
   function scoreWord(strokes, par) {
     var d = strokes - par;
@@ -1680,9 +1895,9 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     return entry.holes.reduce(function (t, s) { return t + (s || 0); }, 0);
   }
   function entryToPar() {
-    var sel = selectedTee();
+    var hs = entryHoleSet(selectedTee().tee) || [];
     var par = 0;
-    entry.holes.forEach(function (s, i) { if (s) par += sel.tee.holes[i].par; });
+    entry.holes.forEach(function (s, i) { if (s && hs[i]) par += hs[i].par; });
     return entryGross() - par;
   }
 
@@ -1690,23 +1905,30 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     if (!entry) return;
     var sel = selectedTee();
     var holesMode = entry.mode === 'holes';
+    var sfMode = entry.mode === 'stableford';
     $('entryHoles').hidden = !holesMode;
-    $('entryTotal').hidden = holesMode;
-    $('modeTotal').setAttribute('aria-pressed', String(!holesMode));
+    $('entryTotal').hidden = holesMode || sfMode;
+    $('entryStableford').hidden = !sfMode;
+    $('modeTotal').setAttribute('aria-pressed', String(entry.mode === 'total'));
+    $('modeStableford').setAttribute('aria-pressed', String(sfMode));
     $('modeHoles').setAttribute('aria-pressed', String(holesMode));
     $('compGeneral').setAttribute('aria-pressed', String(entry.compType === 'general'));
     $('compComp').setAttribute('aria-pressed', String(entry.compType === 'competition'));
-    $('entryTitle').textContent = holesMode ? 'Hole by hole' : 'New score';
+    var nHoles = entryIsNine() ? 9 : 18;
+    $('entryTitle').textContent = holesMode ? 'Hole by hole'
+      : (sfMode ? 'Stableford' : 'New score');
 
-    if (holesMode && sel) {
+    var holeSet = sel ? entryHoleSet(sel.tee) : null;
+    if (holesMode && sel && holeSet) {
       var i = entry.cur;
-      var h = sel.tee.holes[i];
+      var h = holeSet[i];
+      var offset = entry.holes18 === 'back' ? 9 : 0;
       var entered = entry.holes.filter(function (s) { return s != null; }).length;
-      $('hpLabel').textContent = 'Hole ' + (i + 1) + ' of 18';
+      $('hpLabel').textContent = 'Hole ' + (i + 1 + offset) + ' of ' + (offset + holeSet.length);
       var tp = entryToPar();
       $('hpGross').textContent = entered ? 'GROSS ' + entryGross() + ' · ' + (tp === 0 ? 'E' : (tp > 0 ? '+' + tp : tp)) : '';
-      $('hpFill').style.width = Math.round(100 * entered / 18) + '%';
-      $('hcN').textContent = i + 1;
+      $('hpFill').style.width = Math.round(100 * entered / holeSet.length) + '%';
+      $('hcN').textContent = i + 1 + offset;
       $('hcFacts').innerHTML = 'PAR ' + h.par + ' · SI ' + h.strokeIndex +
         (sel.tee.yards ? '<br>' + Math.round(sel.tee.yards / 18) + ' YDS AVG' : '');
       var cap = holeCap(h);
@@ -1717,21 +1939,22 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       $('stepMinus').disabled = s != null && s <= 1;
       $('stepPlus').disabled = s != null && s >= cap;
 
-      $('holeGrid').innerHTML = sel.tee.holes.map(function (hh, k) {
+      $('holeGrid').innerHTML = holeSet.map(function (hh, k) {
         var sk = entry.holes[k];
         var cur = k === i;
         var bg = cur ? 'var(--green)' : (sk != null ? 'var(--green-tint)' : 'var(--bg-soft)');
         var fg = cur ? '#FFFFFF' : (sk != null ? 'var(--green)' : 'var(--faint-3)');
         var bd = cur ? 'var(--green)' : (sk != null ? 'var(--green-tint-bd)' : 'var(--hair)');
-        return '<button class="hg-cell" data-hole="' + k + '"><span class="hg-n">' + (k + 1) + '</span>' +
+        return '<button class="hg-cell" data-hole="' + k + '"><span class="hg-n">' + (k + 1 + offset) + '</span>' +
           '<span class="hg-s num" style="background:' + bg + ';color:' + fg + ';border:1px solid ' + bd + '">' +
           (sk != null ? sk : '–') + '</span></button>';
       }).join('');
 
-      var allDone = entered === 18;
+      var allDone = entered === holeSet.length;
       $('entryCta').textContent = allDone ? 'Submit score' : 'Next hole';
     } else {
-      $('gcPar').textContent = sel ? sel.tee.par : '–';
+      var r0 = entryRatings();
+      $('gcPar').textContent = r0 ? r0.par : '–';
       renderEntryPreviewOnly();
       $('entryCta').textContent = 'Submit score';
     }
@@ -1745,34 +1968,84 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     }).join('') : '<span class="footer-note" style="padding:4px 0">When friends join, tag who you played with.</span>';
   }
 
+  /**
+   * The 18-hole Score Differential an adjusted gross would produce, for
+   * preview. A 9-hole round is scaled against the current index (Rule 5.1b).
+   */
+  function previewDifferential(ags) {
+    var r = entryRatings();
+    if (!r || !(ags > 0)) return null;
+    if (r.nine) {
+      var nine = WHS.nineHoleDifferential({
+        adjustedGross9: ags, courseRating9: r.courseRating,
+        slopeRating9: r.slopeRating, pcc: entry.pcc
+      });
+      return WHS.nineToEighteenDifferential(nine, myHI());
+    }
+    return WHS.scoreDifferential({
+      adjustedGross: ags, courseRating: r.courseRating,
+      slopeRating: r.slopeRating, pcc: entry.pcc
+    });
+  }
+
+  /** Playing Handicap the Stableford points were scored against (95%). */
+  function stablefordHandicap() {
+    var ch = entryCH();
+    return ch == null ? null : WHS.playingHandicap(ch, 95);
+  }
+
   function renderEntryPreviewOnly() {
-    if (!entry || entry.mode !== 'total') return;
-    var sel = selectedTee();
-    var v = parseInt($('grossInput').value, 10);
-    if (sel && v > 0) {
-      var tp = v - sel.tee.par;
-      $('grossToPar').textContent = tp === 0 ? 'E' : (tp > 0 ? '+' + tp : String(tp));
-      $('gcDiff').textContent = fmt(WHS.scoreDifferential({
-        adjustedGross: v, courseRating: sel.tee.courseRating, slopeRating: sel.tee.slopeRating, pcc: entry.pcc
-      }));
-    } else {
-      $('grossToPar').textContent = '';
-      $('gcDiff').textContent = '–';
+    if (!entry) return;
+    var r = entryRatings();
+    if (entry.mode === 'total') {
+      var v = parseInt($('grossInput').value, 10);
+      if (r && v > 0) {
+        var tp = v - r.par;
+        $('grossToPar').textContent = tp === 0 ? 'E' : (tp > 0 ? '+' + tp : String(tp));
+        $('gcDiff').textContent = fmt(previewDifferential(v));
+      } else {
+        $('grossToPar').textContent = '';
+        $('gcDiff').textContent = '–';
+      }
+    } else if (entry.mode === 'stableford') {
+      var pts = parseInt($('pointsInput').value, 10);
+      var ph = stablefordHandicap();
+      var parPoints = entryIsNine() ? 18 : 36;
+      $('sfPH').textContent = ph == null ? '–' : ph;
+      if (r && ph != null && pts >= 0 && $('pointsInput').value !== '') {
+        var ags = WHS.stablefordToAdjustedGross({
+          points: pts, par: r.par, handicap: ph, holes: entryIsNine() ? 9 : 18
+        });
+        var over = pts - parPoints;
+        $('pointsVsPar').textContent = over === 0 ? 'to handicap' : (over > 0 ? '+' + over : String(over));
+        $('sfGross').textContent = ags;
+        $('sfDiff').textContent = fmt(previewDifferential(ags));
+      } else {
+        $('pointsVsPar').textContent = '';
+        $('sfGross').textContent = '–';
+        $('sfDiff').textContent = '–';
+      }
+      $('sfNote').textContent = ph == null
+        ? 'Post three rounds first — converting points to a score needs your Playing Handicap.'
+        : 'Points converted using your Playing Handicap of ' + ph + ' (95% of a Course Handicap of ' +
+          entryCH() + ') over ' + (entryIsNine() ? '9' : '18') + ' holes. Stableford scores zero for anything ' +
+          'worse than a net double bogey, so the result is already adjusted.';
     }
   }
 
   $('stepMinus').addEventListener('click', function () { stepHole(-1); });
   $('stepPlus').addEventListener('click', function () { stepHole(1); });
   function stepHole(d) {
-    var sel = selectedTee();
+    var hs = entryHoleSet(selectedTee().tee);
     var i = entry.cur;
-    var h = sel.tee.holes[i];
+    var h = hs[i];
     var cap = holeCap(h);
     var s = entry.holes[i];
-    if (s == null) s = d > 0 ? h.par : h.par; // first tap seeds at par
+    if (s == null) s = h.par;                 // first tap seeds at par
     else s = Math.min(cap, Math.max(1, s + d));
     entry.holes[i] = Math.min(s, cap);
     renderEntry();
+    saveDraft();
   }
   $('holeGrid').addEventListener('click', function (e) {
     var b = e.target.closest('[data-hole]');
@@ -1781,50 +2054,99 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
   function submitEntry() {
     var sel = selectedTee();
-    if (!sel || !entry) return;
+    var r = entryRatings();
+    if (!sel || !entry || !r) return;
     if (!entry.date) { alert('Pick a date.'); return; }
-    var ags;
+    var nine = entryIsNine();
+    var ags, holeScores = null;
+
     if (entry.mode === 'holes') {
-      var missing = entry.holes.filter(function (s) { return s == null; }).length;
-      if (missing === 18) { alert('Score at least one hole.'); return; }
-      var ch = entryCH();
-      var holesData = sel.tee.holes.map(function (h, i) {
+      var hs = entryHoleSet(sel.tee);
+      var scored = entry.holes.filter(function (x) { return x != null; }).length;
+      if (!scored) { alert('Score at least one hole.'); return; }
+      var strokeCH = entryStrokeCH();
+      // A hole left blank was not played: net par (Rule 3.2b/2). Before an
+      // index exists there are no strokes received, so par + 5 caps instead.
+      var holesData = hs.map(function (h, i) {
         return { par: h.par, strokeIndex: h.strokeIndex, strokes: entry.holes[i] };
       });
-      ags = ch == null
+      ags = strokeCH == null
         ? holesData.reduce(function (t, h) {
-            var cap = h.par + 5;
-            return t + (h.strokes == null ? cap : Math.min(h.strokes, cap));
+            return t + (h.strokes == null ? h.par : Math.min(h.strokes, h.par + 5));
           }, 0)
-        : WHS.adjustedGrossScore(holesData, ch);
+        : WHS.adjustedGrossScore(holesData, strokeCH);
+      holeScores = entry.holes.slice();
+    } else if (entry.mode === 'stableford') {
+      var pts = parseInt($('pointsInput').value, 10);
+      var ph = stablefordHandicap();
+      if (ph == null) { alert('Stableford entry needs a Handicap Index — post three rounds first.'); return; }
+      if (!(pts >= 0)) { alert('Enter your Stableford points.'); return; }
+      ags = WHS.stablefordToAdjustedGross({
+        points: pts, par: r.par, handicap: ph, holes: nine ? 9 : 18
+      });
     } else {
       ags = parseInt($('grossInput').value, 10);
-      if (!(ags > 17)) { alert('Enter your adjusted gross score.'); return; }
+      if (!(ags > 8)) { alert('Enter your adjusted gross score.'); return; }
     }
-    var sd = WHS.scoreDifferential({
-      adjustedGross: ags, courseRating: sel.tee.courseRating, slopeRating: sel.tee.slopeRating, pcc: entry.pcc
-    });
-    db.collection('rounds').doc(uid('r')).set({
+
+    var round = {
       playerId: meId, date: entry.date,
       courseName: sel.course.name, teeName: sel.tee.name,
-      courseRating: sel.tee.courseRating, slopeRating: sel.tee.slopeRating, par: sel.tee.par,
-      pcc: entry.pcc, adjustedGross: ags, differential: sd,
+      courseRating: r.courseRating, slopeRating: r.slopeRating, par: r.par,
+      pcc: entry.pcc, adjustedGross: ags,
       playedWith: Object.keys(entry.playedWith),
       compType: entry.compType,
+      scoringFormat: entry.mode === 'stableford' ? 'stableford' : 'strokes',
+      holesPlayed: nine ? 9 : 18,
+      nineOf: nine ? entry.holes18 : null,
+      holeScores: holeScores,
       createdAt: new Date().toISOString()
-    }).then(function () {
-      closeEntry();
+    };
+    if (nine) {
+      // Store the unrounded 9-hole differential; the record scales it to 18
+      // holes against the index in effect when it was played (Rule 5.1b).
+      round.nineDifferential = WHS.nineHoleDifferential({
+        adjustedGross9: ags, courseRating9: r.courseRating,
+        slopeRating9: r.slopeRating, pcc: entry.pcc
+      });
+      round.differential = WHS.nineToEighteenDifferential(round.nineDifferential, myHI());
+      round.ratingsEstimated = !r.exact;
+    } else {
+      round.differential = WHS.scoreDifferential({
+        adjustedGross: ags, courseRating: r.courseRating,
+        slopeRating: r.slopeRating, pcc: entry.pcc
+      });
+    }
+
+    postRound(round);
+  }
+
+  /** Write a round, queueing it on the device if the write fails offline. */
+  function postRound(round) {
+    db.collection('rounds').doc(uid('r')).set(round).then(function () {
+      closeEntry(false);
       switchNav('home');
-    }).catch(function (err) { alert('Could not post the round (' + (err && err.code) + '). Try again.'); });
+    }).catch(function (err) {
+      if (!navigator.onLine) {
+        pendingWrites.push(round);
+        savePending();
+        closeEntry(false);
+        switchNav('home');
+        renderOfflineBanner();
+        return;
+      }
+      alert('Could not post the round (' + (err && err.code) + '). Try again.');
+    });
   }
   $('entrySave').addEventListener('click', submitEntry);
   $('entryCta').addEventListener('click', function () {
     if (entry && entry.mode === 'holes') {
+      var n = entry.holes.length;
       var entered = entry.holes.filter(function (s) { return s != null; }).length;
-      if (entered < 18) {
+      if (entered < n) {
         // advance to the next unscored hole
-        for (var k = 1; k <= 18; k++) {
-          var idx = (entry.cur + k) % 18;
+        for (var k = 1; k <= n; k++) {
+          var idx = (entry.cur + k) % n;
           if (entry.holes[idx] == null) { entry.cur = idx; break; }
         }
         renderEntry();
@@ -1839,7 +2161,159 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     var id = chip.dataset.with;
     if (entry.playedWith[id]) delete entry.playedWith[id]; else entry.playedWith[id] = true;
     chip.setAttribute('aria-pressed', String(!!entry.playedWith[id]));
+    saveDraft();
   });
+
+  /* ---------------- offline queue ---------------- */
+
+  var PENDING_KEY = 'fairway.pending';
+  function savePending() {
+    tryStore(function () { localStorage.setItem(PENDING_KEY, JSON.stringify(pendingWrites)); });
+  }
+  function loadPending() {
+    var p = tryStore(function () { return JSON.parse(localStorage.getItem(PENDING_KEY)); });
+    pendingWrites = Array.isArray(p) ? p : [];
+  }
+  function flushPending() {
+    if (!db || !pendingWrites.length || !navigator.onLine) return;
+    var batch = pendingWrites.slice();
+    pendingWrites = [];
+    savePending();
+    batch.forEach(function (round) {
+      db.collection('rounds').doc(uid('r')).set(round).catch(function () {
+        pendingWrites.push(round);
+        savePending();
+        renderOfflineBanner();
+      });
+    });
+    renderOfflineBanner();
+  }
+  function renderOfflineBanner() {
+    var holder = $('offlineBanner');
+    if (!holder) return;
+    if (navigator.onLine && !pendingWrites.length) { holder.innerHTML = ''; return; }
+    var msg = navigator.onLine
+      ? pendingWrites.length + ' round' + (pendingWrites.length === 1 ? '' : 's') + ' waiting to sync.'
+      : 'Offline — scores you post are saved on this phone and sync when you have signal.';
+    holder.innerHTML = '<div class="banner-note"><span>' + esc(msg) + '</span>' +
+      (navigator.onLine ? '<button id="retrySync">Sync now</button>' : '') + '</div>';
+  }
+  $('offlineBanner').addEventListener('click', function (e) {
+    if (e.target.id === 'retrySync') flushPending();
+  });
+  window.addEventListener('online', function () { renderOfflineBanner(); flushPending(); });
+  window.addEventListener('offline', renderOfflineBanner);
+
+  /* ---------------- results ---------------- */
+
+  /** Course handicap for a player on the tee a round was played from. */
+  function roundCourseHandicap(round, playerId) {
+    var hi = recordFor(playerId).rec.handicapIndex;
+    if (hi == null) return null;
+    return round.holesPlayed === 9
+      ? WHS.courseHandicap9(hi, round.slopeRating, round.courseRating, round.par)
+      : WHS.courseHandicap(hi, round.slopeRating, round.courseRating, round.par);
+  }
+  function netScore(round) {
+    var ch = roundCourseHandicap(round, round.playerId);
+    return ch == null ? null : round.adjustedGross - ch;
+  }
+
+  /**
+   * Group a player's rounds with the friends tagged on them: same date and
+   * course, mutual or one-way tags, at least two players.
+   */
+  function groupRounds() {
+    if (!meId) return [];
+    var byKey = {};
+    rounds.forEach(function (r) {
+      var key = r.date + '|' + r.courseName;
+      (byKey[key] || (byKey[key] = [])).push(r);
+    });
+    var groups = [];
+    Object.keys(byKey).forEach(function (key) {
+      var rs = byKey[key];
+      var mine = rs.filter(function (r) { return r.playerId === meId; });
+      if (!mine.length) return;
+      var linked = rs.filter(function (r) {
+        if (r.playerId === meId) return true;
+        var theyTagged = (r.playedWith || []).indexOf(meId) >= 0;
+        var iTagged = mine.some(function (m) { return (m.playedWith || []).indexOf(r.playerId) >= 0; });
+        return theyTagged || iTagged;
+      });
+      if (linked.length < 2) return;
+      groups.push({ date: key.split('|')[0], course: key.split('|')[1], rounds: linked });
+    });
+    groups.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+    return groups;
+  }
+
+  /**
+   * Head-to-head record against each friend, decided on net score in rounds
+   * where you both played the same course on the same day.
+   */
+  function headToHead() {
+    var out = {};
+    groupRounds().forEach(function (g) {
+      var mine = g.rounds.filter(function (r) { return r.playerId === meId; })[0];
+      if (!mine) return;
+      var myNet = netScore(mine);
+      if (myNet == null) return;
+      g.rounds.forEach(function (r) {
+        if (r.playerId === meId) return;
+        var theirNet = netScore(r);
+        if (theirNet == null) return;
+        var rec = out[r.playerId] || (out[r.playerId] = { played: 0, won: 0, lost: 0, halved: 0 });
+        rec.played++;
+        if (myNet < theirNet) rec.won++;
+        else if (myNet > theirNet) rec.lost++;
+        else rec.halved++;
+      });
+    });
+    return out;
+  }
+
+  function renderResults() {
+    var groups = groupRounds();
+    var h2h = headToHead();
+    var ids = Object.keys(h2h).sort(function (a, b) { return h2h[b].played - h2h[a].played; });
+    $('resultsEmpty').hidden = groups.length > 0;
+
+    $('h2hList').innerHTML = ids.length ? ids.map(function (id) {
+      var r = h2h[id];
+      var line = r.won + 'W · ' + r.lost + 'L' + (r.halved ? ' · ' + r.halved + 'H' : '');
+      return '<div class="member-row" style="cursor:default">' + avatarHTML(id, 36, 12) +
+        '<span class="m-main"><span class="m-name">' + esc(playerName(id)) + '</span>' +
+        '<span class="m-meta" style="display:block">' + r.played + ' ROUND' + (r.played === 1 ? '' : 'S') +
+        ' ON NET</span></span><span class="m-hi" style="font-size:15px">' + esc(line) + '</span></div>';
+    }).join('') : '<p class="footer-note" style="padding:8px 0">No head-to-head rounds yet.</p>';
+
+    $('groupList').innerHTML = groups.slice(0, 12).map(function (g) {
+      var board = g.rounds.map(function (r) {
+        return { r: r, net: netScore(r), ch: roundCourseHandicap(r, r.playerId) };
+      }).sort(function (a, b) {
+        if (a.net == null) return 1;
+        if (b.net == null) return -1;
+        return a.net - b.net;
+      });
+      var rows = board.map(function (e, i) {
+        var win = i === 0 && e.net != null;
+        return '<div class="listrow" style="gap:10px">' +
+          '<span class="daycell" style="width:20px">' + (e.net == null ? '–' : (i + 1)) + '</span>' +
+          avatarHTML(e.r.playerId, 26, 9) +
+          '<span class="r-main"><span class="r-title"' + (win ? ' style="font-weight:700"' : '') + '>' +
+          esc(playerName(e.r.playerId)) + '</span>' +
+          '<span class="r-meta">' + esc(String(e.r.teeName).toUpperCase()) +
+          (e.ch == null ? '' : ' · C.H\'CAP ' + e.ch) +
+          (e.r.holesPlayed === 9 ? ' · 9 HOLES' : '') + '</span></span>' +
+          '<span class="r-right"><div class="r-gross num">' + e.r.adjustedGross + '</div>' +
+          '<div class="r-diff num' + (win ? '' : ' idle') + '">NET ' + (e.net == null ? '–' : e.net) + '</div></span>' +
+          '</div>';
+      }).join('');
+      return '<div style="margin-bottom:18px"><div class="month-head" style="padding-bottom:2px">' +
+        esc(fmtRevised(g.date)) + ' · ' + esc(g.course) + '</div>' + rows + '</div>';
+    }).join('');
+  }
 
   /* ---------------- me ---------------- */
 
@@ -1851,8 +2325,11 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       a.textContent = initials(playerName(meId));
       a.style.color = playerColor(meId);
     }
-    $('meSub').textContent = (mine.rounds.length + ' ROUND' + (mine.rounds.length === 1 ? '' : 'S') +
+    var cdh = meId && players[meId] ? players[meId].cdh : '';
+    $('meSub').textContent = ((cdh ? 'CDH ' + cdh + ' · ' : '') +
+      mine.rounds.length + ' ROUND' + (mine.rounds.length === 1 ? '' : 'S') +
       (selectedTee() ? ' · ' + selectedTee().course.name : '')).toUpperCase();
+    $('setCDHVal').textContent = cdh ? cdh.toUpperCase() : 'NOT SET';
     $('meHi').textContent = mine.rec.handicapIndex == null ? '–' : fmt(mine.rec.handicapIndex);
     var lows = [];
     if (mine.rec.lowHandicapIndex != null) lows.push('LOW INDEX ' + fmt(mine.rec.lowHandicapIndex));
@@ -1880,7 +2357,14 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     }).join('');
   }
   $('setHomeClub').addEventListener('click', function () { openTeePick('home'); });
-  $('setEntryMode').addEventListener('click', function () { switchNav('courses'); });
+  $('setCDH').addEventListener('click', function () {
+    if (!meId) return;
+    var cur = (players[meId] && players[meId].cdh) || '';
+    var v = prompt('Your CDH number (the England Golf membership number on your handicap record):', cur);
+    if (v == null) return;
+    db.collection('players').doc(meId).update({ cdh: v.trim() })
+      .catch(function () { alert('Could not save your CDH number.'); });
+  });
   $('setExport').addEventListener('click', function () {
     if (!meId) return;
     var mine = recordFor(meId);
@@ -1935,11 +2419,15 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     renderHome();
     renderHistory();
     renderTrend();
+    renderResults();
     renderCoursesTab();
     renderMe();
+    renderDraftBanner();
+    renderOfflineBanner();
     if (entry) syncEntryCtx();
   }
 
+  loadPending();
   boot();
 })();
 </script>
