@@ -166,26 +166,26 @@
       var val = min + (max - min) * g / steps;
       var gy = y(val);
       grid += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy +
-        '" stroke="#e3e1d6" stroke-width="1"/>';
-      labels += '<text x="' + (padL - 8) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="11" fill="#5c6b62">' +
+        '" stroke="var(--line)" stroke-width="1"/>';
+      labels += '<text x="' + (padL - 8) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="11" fill="var(--ink-soft)">' +
         val.toFixed(1) + '</text>';
     }
 
     var path = points.map(function (p, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.hi).toFixed(1); }).join(' ');
     var dots = points.map(function (p, i) {
       return '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.hi).toFixed(1) +
-        '" r="3.5" fill="#2e7d46"><title>' + esc(p.date) + ' — HI ' + fmt(p.hi) + '</title></circle>';
+        '" r="3.5" fill="var(--green-600)"><title>' + esc(p.date) + ' — HI ' + fmt(p.hi) + '</title></circle>';
     }).join('');
 
     var first = points[0], last = points[points.length - 1];
     var xLabels =
-      '<text x="' + padL + '" y="' + (H - 8) + '" font-size="11" fill="#5c6b62">' + esc(first.date) + '</text>' +
-      '<text x="' + (W - padR) + '" y="' + (H - 8) + '" text-anchor="end" font-size="11" fill="#5c6b62">' + esc(last.date) + '</text>';
+      '<text x="' + padL + '" y="' + (H - 8) + '" font-size="11" fill="var(--ink-soft)">' + esc(first.date) + '</text>' +
+      '<text x="' + (W - padR) + '" y="' + (H - 8) + '" text-anchor="end" font-size="11" fill="var(--ink-soft)">' + esc(last.date) + '</text>';
 
     holder.innerHTML =
       '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
       grid + labels + xLabels +
-      '<path d="' + path + '" fill="none" stroke="#2e7d46" stroke-width="2.5" stroke-linejoin="round"/>' +
+      '<path d="' + path + '" fill="none" stroke="var(--green-600)" stroke-width="2.5" stroke-linejoin="round"/>' +
       dots + '</svg>';
   }
 
@@ -408,13 +408,31 @@
   });
 
   document.getElementById('exportBtn').addEventListener('click', function () {
-    var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    var json = JSON.stringify(state, null, 2);
+    var filename = 'fairway-backup-' + todayISO() + '.json';
+    // Hosted on claude.ai, saves go through the viewer-confirmed downloads
+    // capability; a plain browser gets the anchor download.
+    if (typeof window.claude !== 'undefined' && window.claude.use) {
+      window.claude.use('downloads').then(function (downloads) {
+        if (!downloads) throw new Error('unavailable');
+        return downloads.save({ filename: filename, data: json });
+      }).catch(function (err) {
+        if (err && err.code === 'declined') return; // viewer said no
+        anchorDownload(filename, json);
+      });
+      return;
+    }
+    anchorDownload(filename, json);
+  });
+
+  function anchorDownload(filename, json) {
+    var blob = new Blob([json], { type: 'application/json' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'fairway-backup-' + todayISO() + '.json';
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(a.href);
-  });
+  }
 
   document.getElementById('importFile').addEventListener('change', function () {
     var file = this.files[0];
