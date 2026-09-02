@@ -327,6 +327,9 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 .gross-card { margin: 18px 22px 0; }
 .gross-card .gc-main { padding: 18px 20px; border-bottom: 1px solid var(--hair); }
 .gc-input { display: flex; align-items: flex-end; gap: 8px; margin-top: 4px; }
+.gc-input input::-webkit-outer-spin-button,
+.gc-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.gc-input input { -moz-appearance: textfield; }
 .gc-input input {
   width: 130px;
   border: 0;
@@ -980,6 +983,38 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     }
     return recordCache[pid];
   }
+  /**
+   * Per-round values taken from the recomputed record rather than the figures
+   * stored at post time. They differ whenever a round is back-dated or an
+   * earlier round is edited: a 9-hole differential is scaled against the index
+   * in effect on the day it was played, not the index when it was typed in.
+   */
+  var roundCalcCache = null;
+  function roundCalc(round) {
+    if (!roundCalcCache) {
+      roundCalcCache = {};
+      Object.keys(players).forEach(function (pid) {
+        var d = recordFor(pid);
+        d.rounds.forEach(function (rr, i) {
+          var c = d.rec.scores[i];
+          if (!c) return;
+          roundCalcCache[rr.id] = {
+            differential: c.differential != null ? c.differential : rr.differential,
+            // the index played off that day is the one in force before the round
+            indexBefore: i > 0 ? d.rec.scores[i - 1].indexAfter : null,
+            indexAfter: c.indexAfter
+          };
+        });
+      });
+    }
+    return roundCalcCache[round.id] || null;
+  }
+  /** The 18-hole Score Differential the record credits this round with. */
+  function roundDifferential(round) {
+    var c = roundCalc(round);
+    return c ? c.differential : round.differential;
+  }
+
   function togetherRounds(aId, bId) {
     return rounds.filter(function (r) {
       var w = r.playedWith || [];
@@ -1091,6 +1126,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   function dbErr(e) { console.error('db subscription error', e); }
   function afterData() {
     recordCache = {};
+    roundCalcCache = null;
     if (meId && !players[meId]) meId = null;
     if (!meId && Object.keys(players).length >= 0) showProfileOverlay(false);
     if (!prefs.courseId || !courses[prefs.courseId]) {
@@ -1192,7 +1228,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       '<span class="r-main"><span class="r-title">' + esc(title) + '</span>' +
       '<span class="r-meta">' + esc(meta) + '</span></span>' +
       '<span class="r-right"><div class="r-gross num">' + r.adjustedGross + '</div>' +
-      '<div class="r-diff' + (counting || !opts.countingSet ? '' : ' idle') + ' num">' + fmt(r.differential) + '</div></span>' +
+      '<div class="r-diff' + (counting || !opts.countingSet ? '' : ' idle') + ' num">' + fmt(roundDifferential(r)) + '</div></span>' +
       '</button>';
   }
 
@@ -1217,7 +1253,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       ? (n < 3 ? (3 - n) + ' more round' + (3 - n === 1 ? '' : 's') + ' to go' : '')
       : (prevHI != null && prevHI !== hi ? 'was ' + fmt(prevHI) : 'best 8 of last ' + Math.min(n, 20));
 
-    var sparkDiffs = mine.rounds.slice(-12).map(function (r, i, arr) { return r.differential; });
+    var sparkDiffs = mine.rounds.slice(-12).map(function (r) { return roundDifferential(r); });
     var spark = $('heroSpark');
     if (sparkDiffs.length >= 2) {
       var mn = Math.min.apply(null, sparkDiffs), mx = Math.max.apply(null, sparkDiffs);
@@ -1408,16 +1444,16 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     if (view.length < 2) {
       chart.innerHTML = '<p class="footer-note" style="padding:40px 0 0;width:100%;text-align:center">Post rounds to see your differentials here.</p>';
     } else {
-      var vals = view.map(function (v) { return v.r.differential; });
+      var vals = view.map(function (v) { return roundDifferential(v.r); });
       var mn = Math.floor(Math.min.apply(null, vals)) - 1;
       var mx = Math.ceil(Math.max.apply(null, vals)) + 1;
       if (mx - mn < 4) mx = mn + 4;
       var H = 150;
       var bars = view.map(function (v) {
-        var t = (v.r.differential - mn) / (mx - mn);
+        var t = (roundDifferential(v.r) - mn) / (mx - mn);
         var h = Math.round(24 + t * (H - 40));
         return '<div class="tc-col"><div class="tc-bar num" style="height:' + h + 'px;background:' +
-          (countingIdx[v.i] ? 'var(--green)' : 'var(--bar-idle)') + '" title="' + esc(v.r.date) + ' — ' + fmt(v.r.differential) + '"></div></div>';
+          (countingIdx[v.i] ? 'var(--green)' : 'var(--bar-idle)') + '" title="' + esc(v.r.date) + ' — ' + fmt(roundDifferential(v.r)) + '"></div></div>';
       }).join('');
       var lineHTML = '';
       if (hi != null && hi >= mn && hi <= mx) {
@@ -1430,8 +1466,10 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     }
 
     var best = null;
-    mine.rounds.forEach(function (r) { if (!best || r.differential < best.differential) best = r; });
-    $('statBestDiff').textContent = best ? fmt(best.differential) : '–';
+    mine.rounds.forEach(function (r) {
+      if (!best || roundDifferential(r) < roundDifferential(best)) best = r;
+    });
+    $('statBestDiff').textContent = best ? fmt(roundDifferential(best)) : '–';
     var countedVals = mine.rec.counted.map(function (i) { return mine.rec.scores[i].adjustedDifferential; });
     $('statAvg8').textContent = countedVals.length
       ? fmt(countedVals.reduce(function (a, b) { return a + b; }, 0) / countedVals.length) : '–';
@@ -1448,12 +1486,12 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       if (prev == null) {
         msg = 'Your first ' + n + ' rounds set an initial index of ' + fmt(hi) + '.';
       } else if (prev === hi) {
-        msg = 'Your ' + fmt(last.differential) + ' differential at ' + last.courseName +
+        msg = 'Your ' + fmt(roundDifferential(last)) + ' differential at ' + last.courseName +
           (lastCounting ? ' entered the counting eight without moving' : ' didn’t crack the counting eight, so') +
           ' the index stayed at ' + fmt(hi) + '.';
       } else {
         var dir = hi < prev ? 'dropping' : 'lifting';
-        msg = 'Your ' + fmt(last.differential) + ' differential at ' + last.courseName + ' ' +
+        msg = 'Your ' + fmt(roundDifferential(last)) + ' differential at ' + last.courseName + ' ' +
           (lastCounting ? 'joined the counting eight, ' : 'reshaped the last twenty, ') + dir +
           ' the index from ' + fmt(prev) + ' to ' + fmt(hi) + '.';
       }
@@ -1790,7 +1828,17 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       renderDraftBanner();
     }
   });
-  $('fabBtn').addEventListener('click', function () { openEntry(loadDraft() ? loadDraft().entry : null); });
+  $('fabBtn').addEventListener('click', function () {
+    // A draft belongs to the course it was started on — restore that tee with
+    // it, or its hole scores would be read against a different card.
+    var d = loadDraft();
+    if (d) {
+      prefs.courseId = d.courseId;
+      prefs.teeIdx = d.teeIdx;
+      savePrefs();
+    }
+    openEntry(d ? d.entry : null);
+  });
   $('entryCancel').addEventListener('click', function () {
     // leaving a part-scored round keeps it as a draft rather than binning it
     var scored = entry && entry.holes.filter(function (x) { return x != null; }).length;
@@ -2208,7 +2256,11 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
   /** Course handicap for a player on the tee a round was played from. */
   function roundCourseHandicap(round, playerId) {
-    var hi = recordFor(playerId).rec.handicapIndex;
+    // The handicap for a past round is the index that was in force that day,
+    // not today's — otherwise an old head-to-head silently re-scores itself
+    // every time either player's index moves.
+    var c = roundCalc(round);
+    var hi = (c && c.indexBefore != null) ? c.indexBefore : recordFor(playerId).rec.handicapIndex;
     if (hi == null) return null;
     return round.holesPlayed === 9
       ? WHS.courseHandicap9(hi, round.slopeRating, round.courseRating, round.par)
