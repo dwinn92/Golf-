@@ -11,11 +11,14 @@ out_dir = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else root / "dist"
 out_dir.mkdir(parents=True, exist_ok=True)
 
 whs = (root / "js" / "whs.js").read_text()
+ukdir = (root / "data" / "uk-courses.json").read_text()
 
 for src in (root / "artifact").glob("*.html"):
     text = src.read_text()
     marker = "/* @inject:whs */"
     if marker not in text:
         raise SystemExit(f"{src}: missing {marker} marker")
-    (out_dir / src.name).write_text(text.replace(marker, whs))
+    text = text.replace(marker, whs)
+    text = text.replace("/* @inject:ukdir */", "var UK_DIRECTORY = " + ukdir + ";")
+    (out_dir / src.name).write_text(text)
     print(f"built {out_dir / src.name}")

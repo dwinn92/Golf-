@@ -368,6 +368,36 @@ table.scorecard { width: 100%; border-collapse: collapse; font-size: .86rem; }
 .diff-chip .d { font-weight: 700; font-variant-numeric: tabular-nums; }
 .diff-chip .dt { display: block; font-size: .66rem; color: var(--ink-soft); }
 
+/* ================= course directory ================= */
+.dir-search {
+  width: 100%;
+  font: inherit;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--chip);
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.dir-search:focus { outline: 2px solid var(--fairway); outline-offset: 1px; }
+.dir-results { display: grid; gap: 6px; margin-bottom: 12px; }
+.dir-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: var(--card);
+  font-size: .86rem;
+  flex-wrap: wrap;
+}
+.dir-row .dir-name { font-weight: 700; }
+.dir-row .dir-meta { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.dir-row .btn { margin-left: auto; padding: 5px 13px; font-size: .8rem; }
+.dir-flag { display: inline-block; background: var(--gold-wash); color: var(--gold-ink); border-radius: 6px; font-size: .66rem; font-weight: 700; padding: 1px 7px; }
+.dir-more { color: var(--ink-soft); font-size: .78rem; text-align: center; padding: 4px 0; }
+
 /* ================= course list / calculator ================= */
 .course-list { display: grid; gap: 12px; }
 .course-item { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
@@ -657,6 +687,15 @@ table.scorecard { width: 100%; border-collapse: collapse; font-size: .86rem; }
     <!-- ============ COURSE BOOK ============ -->
     <section class="panel" id="panel-courses">
       <div class="card">
+        <h2>Find a UK course <span class="h-sub" id="dirCount"></span></h2>
+        <input type="search" id="dirSearch" class="dir-search" placeholder="Search by club name, town or nation — e.g. “Hunstanton” or “Fife”" autocomplete="off">
+        <div id="dirResults" class="dir-results"></div>
+        <p class="hint" style="margin-bottom:0">Directory of UK courses from OpenStreetMap (© OpenStreetMap contributors, ODbL),
+          with par and approximate championship yardage for well-known venues. Pick one to pre-fill the
+          form below, then add the Course Rating and Slope from your scorecard — handicaps can't be
+          computed without them, and they aren't published in any open dataset.</p>
+      </div>
+      <div class="card">
         <div class="card-head">
           <h2>Course book <span class="h-sub">shared by everyone here</span></h2>
           <button class="btn btn-primary" id="addCourseBtn">Add course</button>
@@ -680,6 +719,9 @@ table.scorecard { width: 100%; border-collapse: collapse; font-size: .86rem; }
           </label>
           <label>Slope Rating
             <input type="number" id="teeSlope" required min="55" max="155" step="1" placeholder="e.g. 128">
+          </label>
+          <label>Yardage <span class="field-hint" style="display:inline">(optional)</span>
+            <input type="number" id="teeYards" min="1000" max="8500" step="1" placeholder="e.g. 6641">
           </label>
           <details class="holes-details">
             <summary>Hole details (optional — enables hole-by-hole entry)</summary>
@@ -763,6 +805,9 @@ table.scorecard { width: 100%; border-collapse: collapse; font-size: .86rem; }
 
 <script>
 /* @inject:whs */
+</script>
+<script>
+/* @inject:ukdir */
 </script>
 <script>
 /* Fairway Clubhouse — shared multi-player UI over the artifact db capability. */
@@ -1470,6 +1515,68 @@ table.scorecard { width: 100%; border-collapse: collapse; font-size: .86rem; }
     });
   });
 
+  /* ---------------- UK course directory ---------------- */
+
+  var REGION_NAMES = { E: 'England', S: 'Scotland', W: 'Wales', N: 'Northern Ireland' };
+  var dirCourses = (typeof UK_DIRECTORY !== 'undefined' && UK_DIRECTORY && Array.isArray(UK_DIRECTORY.courses))
+    ? UK_DIRECTORY.courses : [];
+  document.getElementById('dirCount').textContent =
+    dirCourses.length ? '— ' + dirCourses.length.toLocaleString('en-GB') + ' courses across the UK' : '';
+
+  function dirSearchRun() {
+    var box = document.getElementById('dirResults');
+    var q = document.getElementById('dirSearch').value.trim().toLowerCase();
+    if (q.length < 2) {
+      box.innerHTML = '';
+      return;
+    }
+    var terms = q.split(/\s+/);
+    var hits = [];
+    for (var i = 0; i < dirCourses.length && hits.length < 200; i++) {
+      var c = dirCourses[i];
+      var hay = (c[0] + ' ' + c[2] + ' ' + REGION_NAMES[c[1]]).toLowerCase();
+      var ok = true;
+      for (var t = 0; t < terms.length; t++) {
+        if (hay.indexOf(terms[t]) < 0) { ok = false; break; }
+      }
+      if (ok) hits.push(c);
+    }
+    // yardage-carrying (famous) entries first, then alphabetical (already sorted)
+    hits.sort(function (a, b) { return (b[5] ? 1 : 0) - (a[5] ? 1 : 0); });
+    var shown = hits.slice(0, 30);
+    box.innerHTML = shown.map(function (c, i) {
+      var meta = [REGION_NAMES[c[1]]];
+      if (c[2]) meta.push(c[2]);
+      if (c[3]) meta.push(c[3] + ' holes');
+      if (c[4]) meta.push('par ' + c[4]);
+      if (c[5]) meta.push('~' + c[5].toLocaleString('en-GB') + ' yds');
+      return '<div class="dir-row">' +
+        '<span><span class="dir-name">' + esc(c[0]) + '</span>' +
+        (c[5] ? ' <span class="dir-flag">championship card</span>' : '') +
+        '<br><span class="dir-meta">' + esc(meta.join(' · ')) + '</span></span>' +
+        '<button class="btn btn-ghost" data-dir="' + i + '">Use</button></div>';
+    }).join('') + (hits.length > 30 ? '<div class="dir-more">' + (hits.length >= 200 ? '200+' : hits.length) +
+      ' matches — keep typing to narrow down</div>' : '');
+    box._shown = shown;
+  }
+  document.getElementById('dirSearch').addEventListener('input', dirSearchRun);
+  document.getElementById('dirResults').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-dir]');
+    if (!btn) return;
+    var c = document.getElementById('dirResults')._shown[parseInt(btn.dataset.dir, 10)];
+    if (!c) return;
+    document.getElementById('courseFormCard').hidden = false;
+    renderHoleInputs();
+    document.getElementById('courseName').value = c[0];
+    document.getElementById('teePar').value = c[4] || '';
+    document.getElementById('teeYards').value = c[5] || '';
+    document.getElementById('teeName').value = '';
+    document.getElementById('teeCR').value = '';
+    document.getElementById('teeSlope').value = '';
+    document.getElementById('courseFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('teeName').focus();
+  });
+
   /* ---------------- course book ---------------- */
 
   function renderCourses() {
@@ -1484,7 +1591,8 @@ table.scorecard { width: 100%; border-collapse: collapse; font-size: .86rem; }
       var tees = c.tees.map(function (t) {
         return '<div class="tee-row"><span><strong>' + esc(t.name) + '</strong>' +
           (t.holes ? '<span class="tee-tag">hole data</span>' : '') + '</span>' +
-          '<span class="tee-facts">Par ' + t.par + ' · CR ' + t.courseRating + ' · Slope ' + t.slopeRating + '</span></div>';
+          '<span class="tee-facts">Par ' + t.par + ' · CR ' + t.courseRating + ' · Slope ' + t.slopeRating +
+          (t.yards ? ' · ' + Number(t.yards).toLocaleString('en-GB') + ' yds' : '') + '</span></div>';
       }).join('');
       return '<div class="course-item"><h3>' + esc(c.name) + '</h3>' + tees + '</div>';
     }).join('');
@@ -1518,6 +1626,7 @@ table.scorecard { width: 100%; border-collapse: collapse; font-size: .86rem; }
     var par = parseInt(document.getElementById('teePar').value, 10);
     var cr = parseFloat(document.getElementById('teeCR').value);
     var slope = parseInt(document.getElementById('teeSlope').value, 10);
+    var yards = parseInt(document.getElementById('teeYards').value, 10);
     if (!name || !teeName || !(par >= 54) || isNaN(cr) || !(slope >= 55 && slope <= 155)) {
       alert('Check the tee details — slope must be 55–155.');
       return;
@@ -1541,7 +1650,8 @@ table.scorecard { width: 100%; border-collapse: collapse; font-size: .86rem; }
       holes = pars.map(function (pp, k) { return { par: pp, strokeIndex: sis[k] }; });
     }
     var existingId = courseIds().find(function (id) { return courses[id].name.toLowerCase() === name.toLowerCase(); });
-    var newTee = { name: teeName, par: par, courseRating: cr, slopeRating: slope, holes: holes };
+    var newTee = { name: teeName, par: par, courseRating: cr, slopeRating: slope, holes: holes,
+                   yards: (yards >= 1000 && yards <= 8500) ? yards : null };
     var form = this;
     var write;
     if (existingId) {
