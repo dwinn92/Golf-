@@ -1,0 +1,32 @@
+<div id="authScreen" class="auth-wrap" hidden>
+  <div class="auth-card">
+    <div class="auth-brand">Fairway<span>.</span></div>
+    <p class="auth-tag">World Handicap System · England Golf</p>
+    <h1 id="authTitle">Sign in</h1>
+    <p class="auth-sub" id="authSub">Welcome back.</p>
+    <form id="authForm" autocomplete="on">
+      <label class="auth-field" id="authNameField" hidden>
+        <span>Your name</span>
+        <input type="text" id="authName" maxlength="40" autocomplete="name" placeholder="Tom Fletcher">
+      </label>
+      <label class="auth-field">
+        <span>Email</span>
+        <input type="email" id="authEmail" required autocomplete="email" placeholder="you@example.com">
+      </label>
+      <label class="auth-field" id="authPassField">
+        <span>Password</span>
+        <input type="password" id="authPassword" minlength="6" autocomplete="current-password" placeholder="At least 6 characters">
+      </label>
+      <p class="auth-msg" id="authMsg"></p>
+      <button type="submit" class="auth-submit" id="authSubmit">Sign in</button>
+    </form>
+    <div class="auth-links">
+      <button type="button" id="authToSignup">Create an account</button>
+      <button type="button" id="authToLink">Email me a link instead</button>
+      <button type="button" id="authToReset">Forgot your password?</button>
+      <button type="button" id="authToSignin" hidden>Back to sign in</button>
+    </div>
+    <p class="auth-foot">Your rounds are visible to the other members of your clubhouse. Handicap
+      calculations follow the World Handicap System as operated by England Golf.</p>
+  </div>
+</div>

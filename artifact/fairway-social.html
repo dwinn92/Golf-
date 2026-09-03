@@ -733,7 +733,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       </button>
     </div>
     <div style="padding:0 22px 22px">
-      <button class="ghost-btn" id="switchPlayerBtn">Switch player</button>
+      <button class="ghost-btn" id="switchPlayerBtn">Sign out</button>
     </div>
     <p class="footer-note">Calculations follow the World Handicap System as operated by England Golf (2024 revision). This is a friends tracker — your official index lives with your club and the England Golf / WHS platform.</p>
   </section>
@@ -921,7 +921,11 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 /* @inject:ukdir */
 </script>
 <script>
-/* Fairway — wireframe-faithful mobile UI over the shared db backend. */
+/* @inject:store */
+</script>
+<script>
+/* Fairway — wireframe-faithful mobile UI. All data access goes through Store,
+   supplied by the build (artifact document store, or Supabase on the web). */
 (function () {
   'use strict';
 
@@ -933,7 +937,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   var MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   var MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-  var db = null, meId = null;
+  var meId = null;
   var players = {}, courses = {}, rounds = [];
   var recordCache = {};
   var prefs = { courseId: null, teeIdx: 0 };
@@ -1079,14 +1083,10 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   /* ---------------- boot ---------------- */
 
   function boot() {
-    var use = (typeof window.claude !== 'undefined' && window.claude && window.claude.use)
-      ? window.claude.use.bind(window.claude) : null;
-    if (!use) return showGate();
-    use('db').then(function (got) {
-      if (!got) return showGate();
-      db = got;
+    Store.connect().then(function (ok) {
+      if (!ok) return showGate();
       $('app').hidden = false;
-      meId = tryStore(function () { return localStorage.getItem(PROFILE_KEY); });
+      meId = Store.currentPlayerId();
       var p = tryStore(function () { return JSON.parse(localStorage.getItem(PREFS_KEY)); });
       if (p && typeof p === 'object') prefs = { courseId: p.courseId || null, teeIdx: p.teeIdx | 0 };
       subscribe();
@@ -1096,39 +1096,26 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   function showGate() { $('gate').hidden = false; $('app').hidden = true; }
   function savePrefs() { tryStore(function () { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); }); }
 
+  /**
+   * Reads come from the Store, which is supplied by the build: the artifact
+   * build backs it with the per-artifact document store, the web build with
+   * Supabase behind auth and row level security. The UI is identical either way.
+   */
   function subscribe() {
-    db.collection('players').onSnapshot(function (snap) {
-      players = {};
-      snap.docs.forEach(function (d) {
-        var b = d.data();
-        if (b && b.name) players[d.id] = {
-          name: String(b.name), color: String(b.color || COLORS[0]),
-          cdh: b.cdh ? String(b.cdh) : ''
-        };
+    Store.watch(function (data) {
+      players = data.players;
+      courses = data.courses;
+      rounds = data.rounds.filter(function (r) {
+        return r.playerId && r.date && typeof r.differential === 'number';
       });
       afterData();
-    }, dbErr);
-    db.collection('courses').onSnapshot(function (snap) {
-      courses = {};
-      snap.docs.forEach(function (d) {
-        var b = d.data();
-        if (b && b.name && Array.isArray(b.tees)) courses[d.id] = b;
-      });
-      afterData();
-    }, dbErr);
-    db.collection('rounds').orderBy('date', 'desc').limit(1000).onSnapshot(function (snap) {
-      rounds = snap.docs.map(function (d) {
-        var b = d.data() || {}; b.id = d.id; return b;
-      }).filter(function (r) { return r.playerId && r.date && typeof r.differential === 'number'; });
-      afterData();
-    }, dbErr);
+    }, function (e) { console.error('store error', e); });
   }
-  function dbErr(e) { console.error('db subscription error', e); }
   function afterData() {
     recordCache = {};
     roundCalcCache = null;
-    if (meId && !players[meId]) meId = null;
-    if (!meId && Object.keys(players).length >= 0) showProfileOverlay(false);
+    if (meId && !players[meId]) meId = Store.currentPlayerId();
+    if (!meId && Store.needsProfilePicker) showProfileOverlay(false);
     if (!prefs.courseId || !courses[prefs.courseId]) {
       var ids = courseIds();
       if (ids.length) { prefs.courseId = ids[0]; prefs.teeIdx = 0; }
@@ -1190,18 +1177,20 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     if (!name) return;
     var taken = Object.keys(players).some(function (id) { return players[id].name.toLowerCase() === name.toLowerCase(); });
     if (taken) { alert('There is already a member called ' + name + ' — pick them from the list.'); return; }
-    var id = uid('p');
-    db.collection('players').doc(id).set({ name: name, color: chosenColor, createdAt: new Date().toISOString() })
-      .then(function () { players[id] = { name: name, color: chosenColor }; setMe(id); })
-      .catch(function (err) { alert('Could not join right now (' + (err && err.code) + '). Try again.'); });
+    Store.join(name, chosenColor)
+      .then(function (id) { if (id) { players[id] = { name: name, color: chosenColor }; setMe(id); } })
+      .catch(function (err) { alert('Could not join right now (' + (err && (err.code || err.message)) + '). Try again.'); });
     $('newPlayerName').value = '';
   });
   $('cancelProfile').addEventListener('click', function () { $('profileOverlay').hidden = true; });
   $('homeAvatar').addEventListener('click', function () { switchNav('me'); });
-  $('switchPlayerBtn').addEventListener('click', function () { showProfileOverlay(!!meId); });
+  $('switchPlayerBtn').addEventListener('click', function () {
+    if (Store.needsProfilePicker) showProfileOverlay(!!meId);
+    else Store.signOut();
+  });
   function setMe(id) {
     meId = id;
-    tryStore(function () { localStorage.setItem(PROFILE_KEY, id); });
+    Store.rememberPlayer(id);
     $('profileOverlay').hidden = true;
     recordCache = {};
     scheduleRender();
@@ -1320,11 +1309,11 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       var legacy = tryStore(function () { return JSON.parse(localStorage.getItem(LEGACY_KEY)); });
       if (!legacy || !Array.isArray(legacy.scores)) return;
       Promise.all(legacy.scores.map(function (s) {
-        return db.collection('rounds').doc(uid('r')).set({
+        return Store.postRound({
           playerId: meId, date: s.date, courseName: s.courseName, teeName: s.teeName,
           courseRating: s.courseRating, slopeRating: s.slopeRating, par: s.par,
           pcc: s.pcc || 0, adjustedGross: s.adjustedGross, differential: s.differential,
-          playedWith: [], compType: 'general', createdAt: new Date().toISOString()
+          playedWith: [], compType: 'general', holesPlayed: 18, scoringFormat: 'strokes'
         });
       })).then(function () { tryStore(function () { localStorage.removeItem(LEGACY_KEY); }); })
         .catch(function () { alert('Some rounds could not be imported — try again.'); });
@@ -1397,7 +1386,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     var r = rounds.find(function (x) { return x.id === b.dataset.round; });
     if (!r || r.playerId !== meId) return;
     if (confirm('Delete this round (' + r.courseName + ', ' + r.date + ')? Your index will be recalculated.')) {
-      db.collection('rounds').doc(r.id).delete().catch(function () { alert('Could not delete — try again.'); });
+      Store.deleteRound(r.id).catch(function () { alert('Could not delete — try again.'); });
     }
   });
 
@@ -1629,12 +1618,9 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     if (e.target.closest('#confirmTeeBtn')) {
       var c0 = courses[selectedBookCourse];
       if (!c0 || !meId) return;
-      var updated = JSON.parse(JSON.stringify(c0));
-      var tee0 = updated.tees[bookTeeSel];
-      tee0.confirmedBy = tee0.confirmedBy || [];
-      var at = tee0.confirmedBy.indexOf(meId);
-      if (at >= 0) tee0.confirmedBy.splice(at, 1); else tee0.confirmedBy.push(meId);
-      db.collection('courses').doc(selectedBookCourse).set(updated)
+      var tee0 = c0.tees[bookTeeSel];
+      var mine = (tee0.confirmedBy || []).indexOf(meId) >= 0;
+      Store.confirmTee(selectedBookCourse, bookTeeSel, mine)
         .catch(function () { alert('Could not save the confirmation.'); });
       return;
     }
@@ -1705,16 +1691,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     var newTee = { name: teeName, par: par, courseRating: cr, slopeRating: sr, holes: holes,
       yards: (yards >= 1000 && yards <= 8500) ? yards : null,
       confirmedBy: meId ? [meId] : [] };
-    var existingId = courseIds().find(function (id) { return courses[id].name.toLowerCase() === name.toLowerCase(); });
-    var write;
-    if (existingId) {
-      var updated = JSON.parse(JSON.stringify(courses[existingId]));
-      updated.tees.push(newTee);
-      write = db.collection('courses').doc(existingId).set(updated);
-    } else {
-      write = db.collection('courses').doc(uid('c')).set({ name: name, tees: [newTee] });
-    }
-    write.then(function () {
+    Store.addCourseTee(name, newTee).then(function () {
       $('courseFormCard').hidden = true;
       ['fcName', 'fcTee', 'fcPar', 'fcCR', 'fcSR', 'fcYards'].forEach(function (id) { $(id).value = ''; });
     }).catch(function (err) { alert('Could not save (' + (err && err.code) + '). Try again.'); });
@@ -2171,7 +2148,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
   /** Write a round, queueing it on the device if the write fails offline. */
   function postRound(round) {
-    db.collection('rounds').doc(uid('r')).set(round).then(function () {
+    Store.postRound(round).then(function () {
       closeEntry(false);
       switchNav('home');
     }).catch(function (err) {
@@ -2223,12 +2200,12 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     pendingWrites = Array.isArray(p) ? p : [];
   }
   function flushPending() {
-    if (!db || !pendingWrites.length || !navigator.onLine) return;
+    if (!pendingWrites.length || !navigator.onLine) return;
     var batch = pendingWrites.slice();
     pendingWrites = [];
     savePending();
     batch.forEach(function (round) {
-      db.collection('rounds').doc(uid('r')).set(round).catch(function () {
+      Store.postRound(round).catch(function () {
         pendingWrites.push(round);
         savePending();
         renderOfflineBanner();
@@ -2414,7 +2391,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     var cur = (players[meId] && players[meId].cdh) || '';
     var v = prompt('Your CDH number (the England Golf membership number on your handicap record):', cur);
     if (v == null) return;
-    db.collection('players').doc(meId).update({ cdh: v.trim() })
+    Store.updateProfile({ cdh: v.trim() })
       .catch(function () { alert('Could not save your CDH number.'); });
   });
   $('setExport').addEventListener('click', function () {
