@@ -9,13 +9,17 @@
         <span>Your name</span>
         <input type="text" id="authName" maxlength="40" autocomplete="name" placeholder="Tom Fletcher">
       </label>
-      <label class="auth-field">
+      <label class="auth-field" id="authEmailField">
         <span>Email</span>
         <input type="email" id="authEmail" required autocomplete="email" placeholder="you@example.com">
       </label>
       <label class="auth-field" id="authPassField">
         <span>Password</span>
         <input type="password" id="authPassword" minlength="6" autocomplete="current-password" placeholder="At least 6 characters">
+      </label>
+      <label class="auth-field" id="authPass2Field" hidden>
+        <span>Confirm new password</span>
+        <input type="password" id="authPassword2" minlength="6" autocomplete="new-password" placeholder="Type it again">
       </label>
       <p class="auth-msg" id="authMsg"></p>
       <button type="submit" class="auth-submit" id="authSubmit">Sign in</button>

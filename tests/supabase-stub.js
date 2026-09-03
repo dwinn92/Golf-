@@ -1,11 +1,26 @@
 /* Minimal stand-in for supabase-js: enough surface to drive the web app's
    auth screen and Store without network access. */
 (function () {
-  const users = {};           // email -> {id, password, name}
-  const tables = { profiles: [], courses: [], tees: [], tee_confirmations: [], rounds: [], round_partners: [] };
-  let session = null;
+  const KEY = '__stub_state';
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { saved = {}; }
+  const users = saved.users || {};   // email -> {id, password, name}
+  const tables = saved.tables ||
+    { profiles: [], courses: [], tees: [], tee_confirmations: [], rounds: [], round_partners: [] };
+  let session = saved.session || null;
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify({ users, tables, session })); } catch (e) {} };
+
+  // Stand in for detectSessionInUrl: a link carrying a token signs its owner in.
+  (function () {
+    const h = (location.hash || '').replace(/^#/, '');
+    if (!/access_token=/.test(h)) return;
+    const last = Object.keys(users)[Object.keys(users).length - 1];
+    if (last) session = { user: { id: users[last].id, email: last } };
+  })();
   const authCbs = [];
-  window.__stub = { users, tables, get session() { return session; } };
+  window.__stub = { users, tables, get session() { return session; },
+    // let a test place a member in the signed-in state a recovery link creates
+    signInAs(email) { const u = users[email]; session = { user: { id: u.id, email } }; } };
 
   const uuid = () => 'u' + Math.random().toString(36).slice(2, 10);
   const fire = (evt) => authCbs.forEach(cb => cb(evt, session));
@@ -34,6 +49,7 @@
             throw { message: 'new row violates row-level security policy' };
           }
           tables[table].push(row);
+          persist();
           return row;
         });
         q._result = added;
@@ -85,6 +101,7 @@
             // the database trigger creates the profile
             tables.profiles.push({ id, display_name: name, color: '#1F6B4A', cdh: null, home_tee_id: null });
             session = { user: { id, email } };
+            persist();
             setTimeout(() => fire('SIGNED_IN'), 0);
             return { data: { session, user: session.user }, error: null };
           },
@@ -92,6 +109,7 @@
             const u = users[email];
             if (!u || u.password !== password) return { data: {}, error: { message: 'Invalid login credentials' } };
             session = { user: { id: u.id, email } };
+            persist();
             setTimeout(() => fire('SIGNED_IN'), 0);
             return { data: { session }, error: null };
           },
@@ -100,7 +118,18 @@
             return { data: {}, error: null };
           },
           async resetPasswordForEmail() { return { data: {}, error: null }; },
-          async signOut() { session = null; fire('SIGNED_OUT'); return { error: null }; },
+          async signOut() { session = null; persist(); fire('SIGNED_OUT'); return { error: null }; },
+          async updateUser({ password }) {
+            if (!session) return { data: {}, error: { message: 'Auth session missing' } };
+            const email = Object.keys(users).find(e => users[e].id === session.user.id);
+            if (users[email] && users[email].password === password) {
+              return { data: {}, error: { message: 'New password should be different from the old password.' } };
+            }
+            if (users[email]) users[email].password = password;
+            persist();
+            localStorage.setItem('__stub_pw', password);
+            return { data: { user: session.user }, error: null };
+          },
           onAuthStateChange(cb) { authCbs.push(cb); return { data: { subscription: { unsubscribe() {} } } }; },
           async getSession() { return { data: { session } }; }
         }

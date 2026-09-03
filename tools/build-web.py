@@ -56,13 +56,13 @@ html = f"""<!DOCTYPE html>
 <title>Fairway — golf handicap tracker</title>
 <meta name="description" content="Track your World Handicap System index with your friends: score entry, trends, results and a UK course directory.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="/manifest.webmanifest">
 </head>
 <body>
 {auth_html}
 {body}
-<script src="vendor/supabase.js"></script>
-<script src="config.js"></script>
+<script src="/vendor/supabase.js"></script>
+<script src="/config.js"></script>
 <script>
 {whs}</script>
 <script>

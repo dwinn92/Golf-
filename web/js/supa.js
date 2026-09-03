@@ -11,6 +11,28 @@
   var SUPABASE_URL = global.FAIRWAY_CONFIG && global.FAIRWAY_CONFIG.supabaseUrl;
   var SUPABASE_KEY = global.FAIRWAY_CONFIG && global.FAIRWAY_CONFIG.supabaseKey;
 
+  /**
+   * Email links land here carrying either a hash (#access_token=...&type=recovery)
+   * or a query (?code=... / ?error=...). supabase-js consumes and clears the URL
+   * as soon as the client is created, so read it once, first thing.
+   */
+  function readLinkParams() {
+    var out = {};
+    try {
+      var hash = (global.location.hash || '').replace(/^#/, '');
+      var query = (global.location.search || '').replace(/^\?/, '');
+      [hash, query].forEach(function (str) {
+        if (!str) return;
+        str.split('&').forEach(function (pair) {
+          var bits = pair.split('=');
+          if (bits[0]) out[decodeURIComponent(bits[0])] = decodeURIComponent((bits[1] || '').replace(/\+/g, ' '));
+        });
+      });
+    } catch (e) { /* malformed URL — treat as a plain visit */ }
+    return out;
+  }
+  var linkParams = readLinkParams();
+
   var client = null;
   var listeners = [];
   var cache = { players: {}, courses: {}, rounds: [], me: null, session: null };
@@ -50,6 +72,10 @@
   }
   function resetPassword(email) {
     return sb().auth.resetPasswordForEmail(email, { redirectTo: global.location.origin });
+  }
+  /** Set a new password for the member the recovery link signed in. */
+  function updatePassword(password) {
+    return sb().auth.updateUser({ password: password });
   }
   function signOut() { return sb().auth.signOut(); }
   function onAuth(fn) { return sb().auth.onAuthStateChange(fn); }
@@ -232,6 +258,7 @@
     signUp: signUp, signIn: signIn, signInWithLink: signInWithLink,
     resetPassword: resetPassword, signOut: signOut, onAuth: onAuth, getSession: getSession,
     loadAll: loadAll, subscribe: subscribe, unsubscribe: unsubscribe, onChange: onChange,
+    updatePassword: updatePassword, linkParams: linkParams, readLinkParams: readLinkParams,
     updateProfile: updateProfile, addCourseTee: addCourseTee,
     toggleTeeConfirmation: toggleTeeConfirmation,
     postRound: postRound, deleteRound: deleteRound,
