@@ -15,8 +15,16 @@
   var booted = false;
   var pendingRecovery = false;
 
-  /** Read and clear the auth hash so a refresh cannot replay it. */
-  function takeAuthHash() {
+  /**
+   * Read the auth hash WITHOUT clearing it.
+   *
+   * supabase-js consumes the hash itself when the client is created, so
+   * clearing it first throws the session away — which is exactly what used to
+   * happen: an email link signed you in server-side, then the app dropped the
+   * tokens and showed the sign-in screen again. Only `clearAuthHash` below
+   * tidies the address bar, and only once the session has been resolved.
+   */
+  function readAuthHash() {
     var hash = (global.location.hash || '').replace(/^#/, '');
     if (!hash) return {};
     var out = {};
@@ -24,13 +32,15 @@
       var i = pair.indexOf('=');
       if (i > 0) out[decodeURIComponent(pair.slice(0, i))] = decodeURIComponent(pair.slice(i + 1).replace(/\+/g, ' '));
     });
-    if (out.access_token || out.error || out.error_code || out.type) {
-      // supabase-js has already consumed the tokens by this point
-      try {
-        global.history.replaceState(null, '', global.location.pathname + global.location.search);
-      } catch (e) { global.location.hash = ''; }
-    }
     return out;
+  }
+
+  /** Tidy the address bar so a refresh cannot replay a token. */
+  function clearAuthHash() {
+    if (!global.location.hash && !/[?&]code=/.test(global.location.search)) return;
+    try {
+      global.history.replaceState(null, '', global.location.pathname);
+    } catch (e) { global.location.hash = ''; }
   }
 
   function startApp(session) {
@@ -67,20 +77,28 @@
     }
     global.FairwayAuthUI.init();
 
-    var hash = takeAuthHash();
+    var hash = readAuthHash();
+    var arrivedFromLink = !!(hash.access_token || hash.type || hash.error ||
+      /[?&]code=/.test(global.location.search));
 
     // A link that failed must say why rather than leave a blank page.
     if (hash.error || hash.error_code) {
+      clearAuthHash();
       global.FairwayAuthUI.show(
         global.FairwayAuthUI.explainLinkError(hash.error_code || hash.error, hash.error_description));
       return;
     }
     if (hash.type === 'recovery') pendingRecovery = true;
 
+    // Create the client NOW so it reads the tokens out of the URL before
+    // anything else touches it.
+    D.sb();
+
     D.onAuth(function (event, session) {
       if (event === 'SIGNED_OUT') { global.location.reload(); return; }
       if (event === 'PASSWORD_RECOVERY') { pendingRecovery = true; global.FairwayAuthUI.showRecovery(); return; }
       if (session && session.user) {
+        clearAuthHash();
         if (pendingRecovery) global.FairwayAuthUI.showRecovery();
         else startApp(session);
       }
@@ -88,10 +106,18 @@
 
     D.getSession().then(function (r) {
       var session = r.data && r.data.session;
+      clearAuthHash();
       if (session && pendingRecovery) global.FairwayAuthUI.showRecovery();
       else if (session) startApp(session);
       else if (pendingRecovery) {
-        global.FairwayAuthUI.show('That reset link could not be read. Request a new one below.');
+        global.FairwayAuthUI.show('That reset link could not be read. It may have expired — request a new one below.');
+      } else if (arrivedFromLink) {
+        // The link was valid enough to reach us but produced no session:
+        // usually it was opened in a different browser from the one that
+        // asked for it, or it had already been used.
+        global.FairwayAuthUI.show(
+          'That link did not sign you in. If you opened it in a different browser ' +
+          'from the one you signed up in, sign in with your email and password here instead.');
       } else {
         global.FairwayAuthUI.show();
       }

@@ -10,10 +10,12 @@
   let session = saved.session || null;
   const persist = () => { try { localStorage.setItem(KEY, JSON.stringify({ users, tables, session })); } catch (e) {} };
 
-  // Stand in for detectSessionInUrl: a link carrying a token signs its owner
-  // in, creating the account and profile the real database would already hold.
+  // Stand in for detectSessionInUrl. The real library reads the URL when the
+  // client is CREATED, not when the script loads — so this only runs from
+  // createClient(). Anything that clears the hash beforehand loses the session,
+  // which is precisely the bug this faithfulness exists to catch.
   let recoveryFromHash = false;
-  (function () {
+  function consumeUrl() {
     const h = (location.hash || '').replace(/^#/, '');
     if (!/access_token=/.test(h)) return;
     const p = new URLSearchParams(h);
@@ -26,7 +28,9 @@
                              color: '#1F6B4A', cdh: null, home_tee_id: null });
     }
     if (p.get('type') === 'recovery') recoveryFromHash = true;
-  })();
+    // the real library tidies the hash away once it has the tokens
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  }
   const authCbs = [];
   window.__stub = { users, tables, get session() { return session; },
     // let a test place a member in the signed-in state a recovery link creates
@@ -97,6 +101,7 @@
 
   window.supabase = {
     createClient() {
+      consumeUrl();
       return {
         from,
         channel() { return { on() { return this; }, subscribe() { return this; } }; },
