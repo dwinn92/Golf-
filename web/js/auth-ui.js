@@ -114,10 +114,35 @@
        .then(function () { busy(false); });
   }
 
+  /* ---- set a new password, after following a reset link ---- */
+
+  function recoverMsg(text, kind) {
+    var el = $('recoverMsg');
+    el.textContent = text || '';
+    el.className = 'auth-msg' + (kind ? ' ' + kind : '');
+  }
+
+  function saveNewPassword(e) {
+    e.preventDefault();
+    var p1 = $('recoverPassword').value;
+    var p2 = $('recoverPassword2').value;
+    if (p1 !== p2) { recoverMsg('Those two passwords are different.', 'bad'); return; }
+    $('recoverSubmit').disabled = true;
+    D.updatePassword(p1).then(function (r) {
+      if (r.error) throw r.error;
+      recoverMsg('Password saved.', 'good');
+      global.FairwayRecovered();
+    }).catch(function (err) {
+      recoverMsg(explain(err), 'bad');
+    }).then(function () { $('recoverSubmit').disabled = false; });
+  }
+
   global.FairwayAuthUI = {
     setMode: setMode,
     setMsg: setMsg,
     init: function () {
+      $('recoverForm').addEventListener('submit', saveNewPassword);
+      $('recoverSkip').addEventListener('click', function () { global.FairwayRecovered(); });
       $('authForm').addEventListener('submit', submit);
       $('authToSignup').addEventListener('click', function () { setMode('signup'); });
       $('authToSignin').addEventListener('click', function () { setMode('signin'); });
@@ -125,7 +150,30 @@
       $('authToReset').addEventListener('click', function () { setMode('reset'); });
       setMode('signin');
     },
-    show: function () { $('authScreen').hidden = false; $('app').hidden = true; },
-    hide: function () { $('authScreen').hidden = true; }
+    show: function (message, kind) {
+      $('authScreen').hidden = false;
+      $('recoverScreen').hidden = true;
+      $('app').hidden = true;
+      if (message) setMsg(message, kind || 'bad');
+    },
+    hide: function () { $('authScreen').hidden = true; $('recoverScreen').hidden = true; },
+    showRecovery: function () {
+      $('authScreen').hidden = true;
+      $('app').hidden = true;
+      $('recoverScreen').hidden = false;
+      recoverMsg('');
+      $('recoverPassword').value = '';
+      $('recoverPassword2').value = '';
+    },
+    // Turn a link that arrived with an error in its hash into plain English.
+    explainLinkError: function (code, description) {
+      if (/expired/i.test(code || '') || /expired/i.test(description || '')) {
+        return 'That link has expired. Request a new one below.';
+      }
+      if (/access_denied|otp/i.test(code || '')) {
+        return 'That link is no longer valid — it may already have been used. Request a new one below.';
+      }
+      return description || 'That link could not be used. Request a new one below.';
+    }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

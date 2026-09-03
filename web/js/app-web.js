@@ -1,84 +1,60 @@
 /*
- * Web boot. The shared UI exposes __fairwayBoot(); a real Supabase session
- * decides when to call it and who "me" is.
+ * Web boot. The shared UI exposes __fairwayBoot(); here a real Supabase
+ * session decides when to call it and who "me" is, so a member can only ever
+ * write as themselves.
  *
- * This also handles what email links bring back — a password-recovery link, a
- * confirmed address, or an expired one — because those all land on this page
- * and, left unhandled, would show nothing at all.
+ * This also owns what happens when someone arrives from an email link, which
+ * lands them on the site with the outcome in the URL hash:
+ *   #access_token=...&type=recovery   -> ask for a new password
+ *   #access_token=...&type=magiclink  -> straight into the app
+ *   #error=access_denied&error_code=otp_expired&... -> explain, don't blank
  */
 (function (global) {
   'use strict';
   var D = global.FairwayData;
   var booted = false;
-  var recovering = false;
+  var pendingRecovery = false;
 
-  function authMsg(text, kind) {
-    if (global.FairwayAuthUI) global.FairwayAuthUI.setMsg(text, kind);
-  }
-  function showAuth(mode, text, kind) {
-    global.FairwayAuthUI.show();
-    if (mode) global.FairwayAuthUI.setMode(mode);
-    if (text) authMsg(text, kind);
+  /** Read and clear the auth hash so a refresh cannot replay it. */
+  function takeAuthHash() {
+    var hash = (global.location.hash || '').replace(/^#/, '');
+    if (!hash) return {};
+    var out = {};
+    hash.split('&').forEach(function (pair) {
+      var i = pair.indexOf('=');
+      if (i > 0) out[decodeURIComponent(pair.slice(0, i))] = decodeURIComponent(pair.slice(i + 1).replace(/\+/g, ' '));
+    });
+    if (out.access_token || out.error || out.error_code || out.type) {
+      // supabase-js has already consumed the tokens by this point
+      try {
+        global.history.replaceState(null, '', global.location.pathname + global.location.search);
+      } catch (e) { global.location.hash = ''; }
+    }
+    return out;
   }
 
   function startApp(session) {
-    // A recovery link signs the member in so they can change their password.
-    // Hold them on that screen until they have actually set one.
-    if (recovering || booted) return;
+    if (booted) return;
     D.setMe(session.user.id);
     global.FairwayAuthUI.hide();
     D.loadAll().then(function () {
       D.subscribe();
       booted = true;
+      document.getElementById('app').hidden = false;
       if (typeof global.__fairwayBoot === 'function') global.__fairwayBoot();
     }).catch(function (err) {
-      showAuth(null, 'Could not load your clubhouse: ' + (err.message || err) +
-        ' — check your connection and try again.', 'bad');
+      global.FairwayAuthUI.show('Could not load your clubhouse: ' + (err.message || err));
     });
   }
 
-  // Called by the auth UI once a new password has been saved.
-  global.FairwayOnPasswordSet = function () {
-    recovering = false;
+  /** Called by the recovery screen once the password is saved (or skipped). */
+  global.FairwayRecovered = function () {
+    pendingRecovery = false;
     D.getSession().then(function (r) {
       if (r.data && r.data.session) startApp(r.data.session);
-      else showAuth('signin', 'Password saved. Sign in with it now.', 'good');
+      else global.FairwayAuthUI.show('Password saved — sign in with it now.', 'good');
     });
   };
-
-  /**
-   * Read what the email link delivered. Supabase returns either a signed-in
-   * session (in the URL hash) or an error describing why it could not.
-   */
-  function handleLink(fresh) {
-    var p = fresh || D.linkParams || {};
-    // Tidy the address bar so a refresh does not replay a spent link.
-    if ((p.access_token || p.error || p.code) && global.history && global.history.replaceState) {
-      global.history.replaceState({}, document.title, global.location.pathname);
-    }
-
-    if (p.error || p.error_code) {
-      var desc = (p.error_description || p.error_code || p.error).replace(/\+/g, ' ');
-      var expired = /expired|invalid/i.test(desc);
-      showAuth('signin', expired
-        ? 'That link has expired or has already been used. Request a new one below.'
-        : 'That link could not be used: ' + desc, 'bad');
-      return true;
-    }
-
-    if (p.type === 'recovery') {
-      recovering = true;
-      showAuth('newpassword');
-      return true;
-    }
-
-    if (p.type === 'signup' || p.type === 'email_change' || p.type === 'magiclink' || p.type === 'invite') {
-      // The session that arrives with it signs them in; just say what happened.
-      authMsg(p.type === 'signup' ? 'Email confirmed — signing you in…' : 'Signing you in…', 'good');
-      return false;
-    }
-    return false;
-  }
 
   function init() {
     if (!D.configured) {
@@ -89,61 +65,59 @@
         'and rebuild with <code>python3 tools/build-web.py</code>.</p>';
       return;
     }
-
     global.FairwayAuthUI.init();
-    var handled = handleLink();
+
+    var hash = takeAuthHash();
+
+    // A link that failed must say why rather than leave a blank page.
+    if (hash.error || hash.error_code) {
+      global.FairwayAuthUI.show(
+        global.FairwayAuthUI.explainLinkError(hash.error_code || hash.error, hash.error_description));
+      return;
+    }
+    if (hash.type === 'recovery') pendingRecovery = true;
 
     D.onAuth(function (event, session) {
       if (event === 'SIGNED_OUT') { global.location.reload(); return; }
-      if (event === 'PASSWORD_RECOVERY') {
-        recovering = true;
-        showAuth('newpassword');
-        return;
+      if (event === 'PASSWORD_RECOVERY') { pendingRecovery = true; global.FairwayAuthUI.showRecovery(); return; }
+      if (session && session.user) {
+        if (pendingRecovery) global.FairwayAuthUI.showRecovery();
+        else startApp(session);
       }
-      if (session && session.user) startApp(session);
     });
 
     D.getSession().then(function (r) {
-      if (recovering) return;                       // stay on the new-password screen
-      if (r.data && r.data.session) startApp(r.data.session);
-      else if (!handled) global.FairwayAuthUI.show();
-    }).catch(function (err) {
-      showAuth('signin', 'Could not reach the sign-in service: ' + (err.message || err), 'bad');
-    });
-
-    // Clicking an email link while the app is already open in that tab is a
-    // same-document navigation: the page does not reload, so act on the new
-    // hash directly rather than appearing to ignore the link.
-    global.addEventListener('hashchange', function () {
-      var again = D.readLinkParams();
-      if (again.type === 'recovery' || again.error || again.error_code) {
-        booted = false;
-        handleLink(again);
+      var session = r.data && r.data.session;
+      if (session && pendingRecovery) global.FairwayAuthUI.showRecovery();
+      else if (session) startApp(session);
+      else if (pendingRecovery) {
+        global.FairwayAuthUI.show('That reset link could not be read. Request a new one below.');
+      } else {
+        global.FairwayAuthUI.show();
       }
+    }).catch(function () {
+      global.FairwayAuthUI.show('Could not reach the server. Check your connection and try again.');
     });
-
-    // Whatever happens above, never leave the viewer looking at a blank page.
-    setTimeout(function () {
-      var app = document.getElementById('app');
-      var auth = document.getElementById('authScreen');
-      if (app && auth && app.hidden && auth.hidden) global.FairwayAuthUI.show();
-    }, 4000);
   }
 
-  function boot() {
-    try { init(); }
-    catch (err) {
-      // A failure here used to render nothing at all; show the sign-in screen
-      // with the reason instead.
+  function safeInit() {
+    // Whatever happens, the visitor must never be left looking at a blank page.
+    try {
+      init();
+    } catch (err) {
       try {
-        showAuth('signin', 'Something went wrong starting the app: ' + (err.message || err), 'bad');
+        global.FairwayAuthUI.show('Something went wrong starting the app: ' + (err.message || err));
       } catch (e) {
-        document.body.innerHTML = '<p style="font:15px/1.6 system-ui;padding:40px">' +
-          'Fairway failed to start: ' + String(err && err.message || err) + '</p>';
+        document.body.innerHTML =
+          '<p style="font:15px/1.6 system-ui;padding:40px;max-width:34em;margin:auto">' +
+          'Fairway could not start: ' + String(err && err.message || err) + '</p>';
       }
     }
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', safeInit);
+  } else {
+    safeInit();
+  }
 })(typeof window !== 'undefined' ? window : globalThis);

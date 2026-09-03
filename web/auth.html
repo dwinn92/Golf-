@@ -34,3 +34,27 @@
       calculations follow the World Handicap System as operated by England Golf.</p>
   </div>
 </div>
+
+<div id="recoverScreen" class="auth-wrap" hidden>
+  <div class="auth-card">
+    <div class="auth-brand">Fairway<span>.</span></div>
+    <p class="auth-tag">World Handicap System · England Golf</p>
+    <h1>Set a new password</h1>
+    <p class="auth-sub" id="recoverSub">You followed a reset link. Choose a new password and you will be signed in.</p>
+    <form id="recoverForm" autocomplete="on">
+      <label class="auth-field">
+        <span>New password</span>
+        <input type="password" id="recoverPassword" minlength="6" required autocomplete="new-password" placeholder="At least 6 characters">
+      </label>
+      <label class="auth-field">
+        <span>Confirm new password</span>
+        <input type="password" id="recoverPassword2" minlength="6" required autocomplete="new-password" placeholder="Type it again">
+      </label>
+      <p class="auth-msg" id="recoverMsg"></p>
+      <button type="submit" class="auth-submit" id="recoverSubmit">Save password</button>
+    </form>
+    <div class="auth-links">
+      <button type="button" id="recoverSkip">Skip and go to the app</button>
+    </div>
+  </div>
+</div>

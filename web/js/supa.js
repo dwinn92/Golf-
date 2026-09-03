@@ -78,6 +78,7 @@
     return sb().auth.updateUser({ password: password });
   }
   function signOut() { return sb().auth.signOut(); }
+  function updatePassword(password) { return sb().auth.updateUser({ password: password }); }
   function onAuth(fn) { return sb().auth.onAuthStateChange(fn); }
   function getSession() { return sb().auth.getSession(); }
 
@@ -256,7 +257,8 @@
   global.FairwayData = {
     sb: sb,
     signUp: signUp, signIn: signIn, signInWithLink: signInWithLink,
-    resetPassword: resetPassword, signOut: signOut, onAuth: onAuth, getSession: getSession,
+    resetPassword: resetPassword, updatePassword: updatePassword,
+    signOut: signOut, onAuth: onAuth, getSession: getSession,
     loadAll: loadAll, subscribe: subscribe, unsubscribe: unsubscribe, onChange: onChange,
     updatePassword: updatePassword, linkParams: linkParams, readLinkParams: readLinkParams,
     updateProfile: updateProfile, addCourseTee: addCourseTee,

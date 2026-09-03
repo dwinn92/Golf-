@@ -38,7 +38,9 @@ The Supabase MCP tools cannot reach auth configuration, so these are manual:
 1. **Authentication → URL Configuration**
    - Site URL: `https://fairway-clubhouse.netlify.app`
    - Redirect URLs: add the same origin.
-   Without this, magic links and password-reset links bounce to `localhost`.
+   Without this, magic links and password-reset links bounce to `localhost:3000`
+   and the visitor lands on a dead page. Supabase ignores the redirect the app
+   asks for unless that origin is in the allow-list, then falls back to Site URL.
 
 2. **Authentication → Sign In / Providers → Email**
    - Turn **Confirm email** off, *or* attach your own SMTP under

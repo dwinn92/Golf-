@@ -10,12 +10,22 @@
   let session = saved.session || null;
   const persist = () => { try { localStorage.setItem(KEY, JSON.stringify({ users, tables, session })); } catch (e) {} };
 
-  // Stand in for detectSessionInUrl: a link carrying a token signs its owner in.
+  // Stand in for detectSessionInUrl: a link carrying a token signs its owner
+  // in, creating the account and profile the real database would already hold.
+  let recoveryFromHash = false;
   (function () {
     const h = (location.hash || '').replace(/^#/, '');
     if (!/access_token=/.test(h)) return;
-    const last = Object.keys(users)[Object.keys(users).length - 1];
-    if (last) session = { user: { id: users[last].id, email: last } };
+    const p = new URLSearchParams(h);
+    const email = p.get('email') || 'someone@example.com';
+    const id = p.get('uid') || 'recovered-user';
+    if (!users[email]) users[email] = { id, password: 'old-password', name: 'Recovered User' };
+    session = { user: { id: users[email].id, email } };
+    if (!window.__stubNoProfile && !tables.profiles.some(r => r.id === session.user.id)) {
+      tables.profiles.push({ id: session.user.id, display_name: 'Recovered User',
+                             color: '#1F6B4A', cdh: null, home_tee_id: null });
+    }
+    if (p.get('type') === 'recovery') recoveryFromHash = true;
   })();
   const authCbs = [];
   window.__stub = { users, tables, get session() { return session; },
@@ -130,7 +140,7 @@
             localStorage.setItem('__stub_pw', password);
             return { data: { user: session.user }, error: null };
           },
-          onAuthStateChange(cb) { authCbs.push(cb); return { data: { subscription: { unsubscribe() {} } } }; },
+          onAuthStateChange(cb) { authCbs.push(cb); if (recoveryFromHash) setTimeout(() => cb('PASSWORD_RECOVERY', session), 0); return { data: { subscription: { unsubscribe() {} } } }; },
           async getSession() { return { data: { session } }; }
         }
       };
