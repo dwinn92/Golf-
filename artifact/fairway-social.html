@@ -441,6 +441,38 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 .tee-num { width: 46px; text-align: right; font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .tee-num.ch { width: 44px; font-weight: 600; }
 .tee-row2[aria-pressed="true"] .tee-num.ch { color: var(--green); }
+.dir-dist {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--green);
+  white-space: nowrap;
+}
+.here-badge {
+  display: inline-block;
+  background: var(--green);
+  color: #fff;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: 2px 6px;
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+.start-card {
+  margin: 14px 22px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--hair-2);
+  border-radius: 20px;
+  background: var(--bg-soft);
+}
+.start-card h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.start-card p { margin: 0 0 12px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
+.start-steps { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+.start-steps b { font-weight: 600; }
 .dirrow { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--hair); width: 100%; }
 .dirrow .d-main { flex: 1; text-align: left; }
 .dirrow .d-name { font-size: 14.5px; font-weight: 500; color: var(--ink); }
@@ -590,6 +622,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     <div style="padding:0 22px" class="rowlist" id="homeClubFeed"></div>
     <div id="importBanner"></div>
     <div id="offlineBanner"></div>
+    <div id="startHere"></div>
   </section>
 
   <!-- ============ ROUNDS ============ -->
@@ -664,6 +697,10 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
         <div class="lens"></div>
         <input type="search" id="courseSearch" placeholder="Search 2,897 UK courses or your club" autocomplete="off">
       </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <button class="fchip" id="nearMeBtn" aria-pressed="false">📍 COURSES NEAR ME</button>
+        <span class="d-meta" id="nearMeStatus"></span>
+      </div>
     </div>
     <div id="dirResultsWrap" hidden>
       <div class="eyebrow" style="padding:6px 22px 4px">Directory</div>
@@ -723,8 +760,8 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
         <span class="sr-label">Home club</span>
         <span class="sr-val"><span id="setHomeClubVal">—</span><span class="sr-chev">›</span></span>
       </button>
-      <button class="set-row" id="setCDH">
-        <span class="sr-label">CDH number</span>
+      <button class="set-row" id="setProfile">
+        <span class="sr-label">Name, colour &amp; CDH</span>
         <span class="sr-val"><span id="setCDHVal">NOT SET</span><span class="sr-chev">›</span></span>
       </button>
       <button class="set-row" id="setExport">
@@ -892,6 +929,54 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     <h3 id="teePickTitle">Choose course &amp; tee</h3>
     <p class="sub">From the shared course book. Add new courses in the Courses tab.</p>
     <div id="teePickList"></div>
+  </div>
+</div>
+
+<!-- ============ ROUND DETAIL / SCORECARD ============ -->
+<div class="overlay" id="roundOverlay" hidden>
+  <div class="sheet">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+      <h3 id="rdCourse" style="margin:0"></h3>
+      <span class="hi-num num" id="rdGross" style="font-size:28px"></span>
+    </div>
+    <p class="me-sub" id="rdMeta" style="margin:4px 0 14px"></p>
+
+    <div class="stat-row" style="margin:0 0 14px">
+      <div class="st-cell"><div class="label">To par</div><div class="st-val num" id="rdToPar">–</div></div>
+      <div class="st-cell"><div class="label">Differential</div><div class="st-val num" id="rdDiff">–</div></div>
+      <div class="st-cell"><div class="label">Points</div><div class="st-val num" id="rdPoints">–</div></div>
+    </div>
+
+    <div id="rdCardWrap" hidden>
+      <div class="eyebrow" style="padding:0 0 6px">Scorecard</div>
+      <div class="table-scroll"><table class="scorecard" id="rdCard"></table></div>
+    </div>
+    <p class="footer-note" id="rdNoCard" hidden>This round was posted as a total, so there is no hole-by-hole card.</p>
+
+    <div id="rdWith"></div>
+
+    <div style="display:flex;gap:10px;margin-top:16px" id="rdActions">
+      <button class="ghost-btn" id="rdEdit" style="flex:1">Edit</button>
+      <button class="ghost-btn" id="rdDelete" style="flex:1;color:var(--danger);border-color:var(--danger)">Delete</button>
+    </div>
+    <div style="margin-top:10px"><button class="ghost-btn" id="rdClose">Close</button></div>
+  </div>
+</div>
+
+<!-- ============ EDIT PROFILE ============ -->
+<div class="overlay" id="editProfileOverlay" hidden>
+  <div class="sheet">
+    <h3>Your profile</h3>
+    <p class="sub">This is how you appear to the rest of the clubhouse.</p>
+    <div class="ff"><span class="label">Display name</span><input type="text" id="epName" maxlength="40"></div>
+    <div class="ff"><span class="label">CDH number (optional)</span><input type="text" id="epCDH" maxlength="30" placeholder="401 8823"></div>
+    <div class="ff"><span class="label">Tee marker colour</span></div>
+    <div class="swatches" id="epSwatches"></div>
+    <p class="auth-msg" id="epMsg" style="margin-top:12px"></p>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="cta green" id="epSave" style="flex:1">Save</button>
+      <button class="ghost-btn" id="epCancel" style="flex:0 0 auto;padding:0 18px">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -1284,10 +1369,31 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     }).join('');
 
     renderImportBanner(mine);
+    renderStartHere(mine);
   }
   $('homeSubmitBtn').addEventListener('click', openEntry);
   $('homeSeeAll').addEventListener('click', function () { switchNav('rounds'); });
   $('phChange').addEventListener('click', function () { openTeePick('home'); });
+
+  /** First-run guidance: an empty clubhouse should say what to do next. */
+  function renderStartHere(mine) {
+    var holder = $('startHere');
+    if (!meId) { holder.innerHTML = ''; return; }
+    var haveCourses = courseIds().length > 0;
+    var n = mine.rounds.length;
+    if (haveCourses && n >= 3) { holder.innerHTML = ''; return; }
+    var steps = [];
+    steps.push((haveCourses ? '<s>' : '<b>') + 'Add your course' + (haveCourses ? '</s>' : '</b>') +
+      ' — search the directory on the Courses tab, then copy the Course Rating and Slope from your scorecard.');
+    steps.push((n > 0 ? '<s>' : '<b>') + 'Post a round' + (n > 0 ? '</s>' : '</b>') +
+      ' — tap the green + button.');
+    steps.push((n >= 3 ? '<s>' : '<b>') + 'Play three rounds' + (n >= 3 ? '</s>' : '</b>') +
+      ' — that is 54 holes, the minimum for a Handicap Index.' +
+      (n > 0 && n < 3 ? ' <span class="hint">(' + (3 - n) + ' to go)</span>' : ''));
+    holder.innerHTML = '<div class="start-card"><h3>Getting started</h3>' +
+      '<p>Three steps and your index appears at the top of this screen.</p>' +
+      '<ol class="start-steps"><li>' + steps.join('</li><li>') + '</li></ol></div>';
+  }
 
   function renderImportBanner(mine) {
     var holder = $('importBanner');
@@ -1379,16 +1485,155 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     $('historyList').innerHTML = html || (mine.rounds.length ? '<p class="footer-note" style="padding:8px 0">Nothing matches this filter.</p>' : '');
   }
 
-  // tap own round -> offer delete
+  /* ---------------- round detail & scorecard ---------------- */
+
+  var viewedRound = null;
+
+  function openRound(id) {
+    var r = rounds.find(function (x) { return x.id === id; });
+    if (!r) return;
+    viewedRound = r;
+    var mine = r.playerId === meId;
+    var calc = roundCalc(r);
+
+    $('rdCourse').textContent = r.courseName;
+    $('rdGross').textContent = r.adjustedGross;
+    var bits = [playerName(r.playerId), fmtRevised(r.date), String(r.teeName).toUpperCase()];
+    if (r.holesPlayed === 9) bits.push(r.nineOf === 'back' ? 'BACK 9' : 'FRONT 9');
+    if (r.scoringFormat === 'stableford') bits.push('STABLEFORD');
+    bits.push(r.compType === 'competition' ? 'COMPETITION' : 'GENERAL PLAY');
+    if (r.ratingsEstimated) bits.push('EST RATINGS');
+    $('rdMeta').textContent = bits.join(' · ').toUpperCase();
+
+    var toPar = r.adjustedGross - r.par;
+    $('rdToPar').textContent = toPar === 0 ? 'E' : (toPar > 0 ? '+' + toPar : String(toPar));
+    $('rdDiff').textContent = fmt(calc ? calc.differential : r.differential);
+
+    // Course handicap for the player on the day, so the card can show strokes
+    var ch = roundCourseHandicap(r, r.playerId);
+    var holes = r.holeScores;
+    var teeHoles = holesForRound(r);
+
+    if (Array.isArray(holes) && teeHoles && holes.length === teeHoles.length) {
+      var pts = 0;
+      teeHoles.forEach(function (h, i) {
+        pts += WHS.stablefordPointsForHole(holes[i], h.par, ch == null ? 0 : ch, h.strokeIndex);
+      });
+      $('rdPoints').textContent = ch == null ? '–' : pts;
+      $('rdCardWrap').hidden = false;
+      $('rdNoCard').hidden = true;
+      $('rdCard').innerHTML = scorecardHTML(teeHoles, holes, ch, r);
+    } else {
+      $('rdPoints').textContent = '–';
+      $('rdCardWrap').hidden = true;
+      $('rdNoCard').hidden = false;
+    }
+
+    var names = (r.playedWith || []).map(playerName);
+    $('rdWith').innerHTML = names.length
+      ? '<div class="eyebrow" style="padding:14px 0 6px">Played with</div>' +
+        '<div class="with-chips">' + (r.playedWith || []).map(function (id) {
+          return '<span class="wchip">' + avatarHTML(id, 22, 9) + '<span>' + esc(playerName(id)) + '</span></span>';
+        }).join('') + '</div>'
+      : '';
+
+    $('rdActions').hidden = !mine;
+    $('roundOverlay').hidden = false;
+  }
+
+  /** The tee's hole list for a round, matched to 18 or the nine played. */
+  function holesForRound(r) {
+    var course = Object.keys(courses).map(function (id) { return courses[id]; })
+      .find(function (c) { return c.name === r.courseName; });
+    var tee = course && course.tees.find(function (t) { return t.name === r.teeName; });
+    if (!tee || !tee.holes || tee.holes.length !== 18) return null;
+    if (r.holesPlayed === 9) return r.nineOf === 'back' ? tee.holes.slice(9) : tee.holes.slice(0, 9);
+    return tee.holes;
+  }
+
+  function scorecardHTML(teeHoles, scores, ch, r) {
+    var offset = (r.holesPlayed === 9 && r.nineOf === 'back') ? 9 : 0;
+    function row(label, cells, cls) {
+      return '<tr><th style="text-align:left">' + label + '</th>' + cells.map(function (c) {
+        return '<td class="num' + (cls ? ' ' + cls : '') + '">' + c + '</td>';
+      }).join('') + '</tr>';
+    }
+    var nums = teeHoles.map(function (h, i) { return i + 1 + offset; });
+    var pars = teeHoles.map(function (h) { return h.par; });
+    var sis = teeHoles.map(function (h) { return h.strokeIndex; });
+    var shots = teeHoles.map(function (h, i) {
+      var v = scores[i];
+      if (v == null) return '–';
+      var d = v - h.par;
+      var colour = d < 0 ? 'color:var(--under);font-weight:700'
+        : d === 0 ? 'font-weight:600' : 'color:var(--ink-3)';
+      return '<span style="' + colour + '">' + v + '</span>';
+    });
+    var strokes = ch == null ? null : teeHoles.map(function (h) {
+      var n = WHS.strokesOnHole(ch, h.strokeIndex);
+      return n === 0 ? '' : (n > 0 ? '•'.repeat(Math.min(n, 3)) : '−');
+    });
+    var out = '<thead>' + row('Hole', nums) + '</thead><tbody>' +
+      row('Par', pars) + row('SI', sis);
+    if (strokes) out += row('Shots', strokes);
+    out += row('Score', shots) + '</tbody>';
+    return out;
+  }
+
   $('historyList').addEventListener('click', function (e) {
     var b = e.target.closest('[data-round]');
-    if (!b) return;
-    var r = rounds.find(function (x) { return x.id === b.dataset.round; });
-    if (!r || r.playerId !== meId) return;
-    if (confirm('Delete this round (' + r.courseName + ', ' + r.date + ')? Your index will be recalculated.')) {
-      Store.deleteRound(r.id).catch(function () { alert('Could not delete — try again.'); });
-    }
+    if (b) openRound(b.dataset.round);
   });
+  $('homeRecent').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-round]');
+    if (b) openRound(b.dataset.round);
+  });
+  $('homeClubFeed').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-round]');
+    if (b) openRound(b.dataset.round);
+  });
+  $('rdClose').addEventListener('click', function () { $('roundOverlay').hidden = true; viewedRound = null; });
+  $('roundOverlay').addEventListener('click', function (e) {
+    if (e.target === $('roundOverlay')) { $('roundOverlay').hidden = true; viewedRound = null; }
+  });
+  $('rdDelete').addEventListener('click', function () {
+    if (!viewedRound) return;
+    var r = viewedRound;
+    if (!confirm('Delete this round (' + r.courseName + ', ' + r.date + ')? Your index will be recalculated.')) return;
+    Store.deleteRound(r.id).then(function () {
+      $('roundOverlay').hidden = true;
+      viewedRound = null;
+    }).catch(function () { alert('Could not delete — try again.'); });
+  });
+  $('rdEdit').addEventListener('click', function () {
+    if (!viewedRound) return;
+    editRound(viewedRound);
+  });
+
+  /**
+   * Editing re-opens the entry sheet loaded with the round, and removes the
+   * original once the replacement is posted.
+   */
+  function editRound(r) {
+    var course = Object.keys(courses).find(function (id) { return courses[id].name === r.courseName; });
+    var teeIdx = course ? courses[course].tees.findIndex(function (t) { return t.name === r.teeName; }) : -1;
+    if (course && teeIdx >= 0) { prefs.courseId = course; prefs.teeIdx = teeIdx; savePrefs(); }
+    $('roundOverlay').hidden = true;
+    viewedRound = null;
+    var withMap = {};
+    (r.playedWith || []).forEach(function (id) { withMap[id] = true; });
+    openEntry({
+      mode: Array.isArray(r.holeScores) ? 'holes' : (r.scoringFormat === 'stableford' ? 'stableford' : 'total'),
+      compType: r.compType || 'general',
+      holes18: r.holesPlayed === 9 ? (r.nineOf || 'front') : 18,
+      date: r.date, pcc: r.pcc || 0,
+      holes: Array.isArray(r.holeScores) ? r.holeScores.slice() : [],
+      cur: 0, playedWith: withMap,
+      gross: r.scoringFormat === 'stableford' ? '' : String(r.adjustedGross),
+      points: '',
+      replacing: r.id
+    });
+  }
 
   /* ---------------- rounds: trend ---------------- */
 
@@ -1492,6 +1737,90 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
   /* ---------------- courses ---------------- */
 
+  /* ---------------- where am I ---------------- */
+
+  var myPos = null;          // {lat, lon} once the visitor shares it
+  var locating = false;
+
+  /** Great-circle distance in miles. */
+  function distanceMiles(lat1, lon1, lat2, lon2) {
+    var R = 3958.8, toRad = Math.PI / 180;
+    var dLat = (lat2 - lat1) * toRad, dLon = (lon2 - lon1) * toRad;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  function fmtDistance(mi) {
+    if (mi < 0.1) return 'HERE';
+    if (mi < 10) return mi.toFixed(1) + ' MI';
+    return Math.round(mi) + ' MI';
+  }
+
+  function requestLocation() {
+    if (locating) return;
+    if (!navigator.geolocation) {
+      $('nearMeStatus').textContent = 'This browser cannot share your location.';
+      return;
+    }
+    locating = true;
+    $('nearMeStatus').textContent = 'Finding you…';
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      locating = false;
+      myPos = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      $('nearMeBtn').setAttribute('aria-pressed', 'true');
+      $('nearMeStatus').textContent = 'Sorted by distance.';
+      scheduleRender();
+    }, function (err) {
+      locating = false;
+      myPos = null;
+      $('nearMeBtn').setAttribute('aria-pressed', 'false');
+      $('nearMeStatus').textContent = (err && err.code === 1)
+        ? 'Location permission denied — search by name instead.'
+        : 'Could not get your location — search by name instead.';
+      scheduleRender();
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  }
+  $('nearMeBtn').addEventListener('click', function () {
+    if (myPos) {
+      myPos = null;
+      this.setAttribute('aria-pressed', 'false');
+      $('nearMeStatus').textContent = '';
+      scheduleRender();
+      return;
+    }
+    requestLocation();
+  });
+
+  /** The course in the shared book you appear to be standing on, if any. */
+  function courseIAmAt() {
+    if (!myPos) return null;
+    var best = null;
+    courseIds().forEach(function (id) {
+      var pt = directoryPointFor(courses[id].name);
+      if (!pt) return;
+      var d = distanceMiles(myPos.lat, myPos.lon, pt[0], pt[1]);
+      if (d < 1.2 && (!best || d < best.dist)) best = { id: id, dist: d };
+    });
+    return best;
+  }
+
+  var dirByName = null;
+  /** Coordinates for a course name, from the directory. */
+  function directoryPointFor(name) {
+    if (!dirByName) {
+      dirByName = {};
+      dirCourses.forEach(function (c) {
+        if (c.length > 7 && c[6]) dirByName[String(c[0]).toLowerCase()] = [c[6], c[7]];
+      });
+    }
+    return dirByName[String(name).toLowerCase()] || null;
+  }
+  /** Distance to a directory row in miles, or null when we cannot say. */
+  function dirDistance(c) {
+    if (!myPos || c.length < 8 || !c[6]) return null;
+    return distanceMiles(myPos.lat, myPos.lon, c[6], c[7]);
+  }
+
   var REGION_NAMES = { E: 'England', S: 'Scotland', W: 'Wales', N: 'Northern Ireland' };
   var dirCourses = (typeof UK_DIRECTORY !== 'undefined' && UK_DIRECTORY && Array.isArray(UK_DIRECTORY.courses)) ? UK_DIRECTORY.courses : [];
   if (dirCourses.length) {
@@ -1514,6 +1843,14 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     var ids = courseIds().filter(function (id) {
       return !q || courses[id].name.toLowerCase().indexOf(q) >= 0;
     });
+    if (myPos) {
+      ids.sort(function (a, b) {
+        var pa = directoryPointFor(courses[a].name), pb = directoryPointFor(courses[b].name);
+        var da = pa ? distanceMiles(myPos.lat, myPos.lon, pa[0], pa[1]) : Infinity;
+        var db = pb ? distanceMiles(myPos.lat, myPos.lon, pb[0], pb[1]) : Infinity;
+        return da - db;
+      });
+    }
     $('courseBook').innerHTML = ids.length ? ids.map(function (id) {
       var c = courses[id];
       var confirmed = c.tees.reduce(function (n, t) {
@@ -1522,36 +1859,58 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       var meta = c.tees.map(function (t) { return t.name.toUpperCase(); }).join(' · ') +
         ' · PAR ' + (c.tees[0] ? c.tees[0].par : '–') +
         (confirmed ? ' · ' + confirmed + '/' + c.tees.length + ' CONFIRMED' : '');
+      var pt = directoryPointFor(c.name);
+      var d = (myPos && pt) ? distanceMiles(myPos.lat, myPos.lon, pt[0], pt[1]) : null;
+      var here = d != null && d < 1.2;
       return '<button class="dirrow" data-book="' + esc(id) + '">' +
-        '<span class="d-main"><span class="d-name">' + esc(c.name) + '</span>' +
+        '<span class="d-main"><span class="d-name">' + esc(c.name) +
+        (here ? '<span class="here-badge">YOU ARE HERE</span>' : '') + '</span>' +
         '<span class="d-meta" style="display:block">' + esc(meta) + '</span></span>' +
+        (d != null ? '<span class="dir-dist">' + fmtDistance(d) + '</span>' : '') +
         '<span class="d-act">' + (selectedBookCourse === id ? 'OPEN' : 'TEES') + '</span></button>';
     }).join('') : '<p class="footer-note" style="padding:8px 0">' +
       (q ? 'Nothing in the course book matches.' : 'The shared course book is empty — search the directory below and add the courses you play.') + '</p>';
 
     // directory results
-    if (q.length >= 2) {
-      var terms = q.split(/\s+/);
+    if (q.length >= 2 || myPos) {
+      var terms = q.length >= 2 ? q.split(/\s+/) : [];
       var hits = [];
-      for (var i = 0; i < dirCourses.length && hits.length < 200; i++) {
+      var cap = myPos && !terms.length ? dirCourses.length : 200;
+      for (var i = 0; i < dirCourses.length && hits.length < cap; i++) {
         var c2 = dirCourses[i];
-        var hay = (c2[0] + ' ' + c2[2] + ' ' + REGION_NAMES[c2[1]]).toLowerCase();
         var ok = true;
-        for (var t = 0; t < terms.length; t++) if (hay.indexOf(terms[t]) < 0) { ok = false; break; }
+        if (terms.length) {
+          var hay = (c2[0] + ' ' + c2[2] + ' ' + REGION_NAMES[c2[1]]).toLowerCase();
+          for (var t = 0; t < terms.length; t++) if (hay.indexOf(terms[t]) < 0) { ok = false; break; }
+        } else if (dirDistance(c2) == null || dirDistance(c2) > 30) {
+          ok = false;   // with no search text, show only what is genuinely nearby
+        }
         if (ok) hits.push(c2);
       }
-      hits.sort(function (a, b) { return (b[5] ? 1 : 0) - (a[5] ? 1 : 0); });
+      if (myPos) {
+        hits.sort(function (a, b) {
+          var da = dirDistance(a), db = dirDistance(b);
+          return (da == null ? Infinity : da) - (db == null ? Infinity : db);
+        });
+      } else {
+        hits.sort(function (a, b) { return (b[5] ? 1 : 0) - (a[5] ? 1 : 0); });
+      }
       var shown = hits.slice(0, 25);
       dirWrap.hidden = false;
+      $('dirResultsWrap').querySelector('.eyebrow').textContent =
+        (myPos && q.length < 2) ? 'Nearby courses' : 'Directory';
       $('dirResults').innerHTML = shown.map(function (c3, i2) {
         var meta = [REGION_NAMES[c3[1]]];
         if (c3[2]) meta.push(c3[2]);
         if (c3[3]) meta.push(c3[3] + ' HOLES');
         if (c3[4]) meta.push('PAR ' + c3[4]);
         if (c3[5]) meta.push('~' + c3[5].toLocaleString('en-GB') + ' YDS');
+        var dd = dirDistance(c3);
         return '<button class="dirrow" data-dir="' + i2 + '">' +
-          '<span class="d-main"><span class="d-name">' + esc(c3[0]) + '</span>' +
+          '<span class="d-main"><span class="d-name">' + esc(c3[0]) +
+          (dd != null && dd < 1.2 ? '<span class="here-badge">YOU ARE HERE</span>' : '') + '</span>' +
           '<span class="d-meta" style="display:block">' + esc(meta.join(' · ').toUpperCase()) + '</span></span>' +
+          (dd != null ? '<span class="dir-dist">' + fmtDistance(dd) + '</span>' : '') +
           '<span class="d-act">ADD</span></button>';
       }).join('') + (hits.length > 25 ? '<p class="footer-note" style="padding:6px 0">' +
         (hits.length >= 200 ? '200+' : hits.length) + ' matches — keep typing.</p>' : '');
@@ -1742,6 +2101,15 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   function openEntry(draft) {
     if (!meId) { showProfileOverlay(false); return; }
     if (!selectedTee()) { switchNav('courses'); return; }
+    // Standing on a course in the book? Start the card there.
+    if (!draft) {
+      var at = courseIAmAt();
+      if (at && at.id !== prefs.courseId) {
+        prefs.courseId = at.id;
+        prefs.teeIdx = 0;
+        savePrefs();
+      }
+    }
     entry = draft || {
       mode: 'total', compType: 'general', holes18: 18,
       date: todayISO(), pcc: 0,
@@ -1940,8 +2308,8 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     $('compGeneral').setAttribute('aria-pressed', String(entry.compType === 'general'));
     $('compComp').setAttribute('aria-pressed', String(entry.compType === 'competition'));
     var nHoles = entryIsNine() ? 9 : 18;
-    $('entryTitle').textContent = holesMode ? 'Hole by hole'
-      : (sfMode ? 'Stableford' : 'New score');
+    $('entryTitle').textContent = entry.replacing ? 'Edit round'
+      : (holesMode ? 'Hole by hole' : (sfMode ? 'Stableford' : 'New score'));
 
     var holeSet = sel ? entryHoleSet(sel.tee) : null;
     if (holesMode && sel && holeSet) {
@@ -2115,6 +2483,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     }
 
     var round = {
+      clientId: entry.clientId || (entry.clientId = uid('r')),
       playerId: meId, date: entry.date,
       courseName: sel.course.name, teeName: sel.tee.name,
       courseRating: r.courseRating, slopeRating: r.slopeRating, par: r.par,
@@ -2148,7 +2517,12 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
   /** Write a round, queueing it on the device if the write fails offline. */
   function postRound(round) {
+    var replacing = entry && entry.replacing;
     Store.postRound(round).then(function () {
+      // Only remove the original after the replacement is stored, so a failure
+      // mid-edit can never lose the round.
+      if (replacing) return Store.deleteRound(replacing).catch(function () {});
+    }).then(function () {
       closeEntry(false);
       switchNav('home');
     }).catch(function (err) {
@@ -2386,13 +2760,44 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     }).join('');
   }
   $('setHomeClub').addEventListener('click', function () { openTeePick('home'); });
-  $('setCDH').addEventListener('click', function () {
-    if (!meId) return;
-    var cur = (players[meId] && players[meId].cdh) || '';
-    var v = prompt('Your CDH number (the England Golf membership number on your handicap record):', cur);
-    if (v == null) return;
-    Store.updateProfile({ cdh: v.trim() })
-      .catch(function () { alert('Could not save your CDH number.'); });
+  var epColor = COLORS[0];
+  function renderEpSwatches() {
+    $('epSwatches').innerHTML = COLORS.map(function (c) {
+      return '<button class="swatch" style="background:' + c + '" data-epcolor="' + c +
+        '" aria-pressed="' + (c === epColor) + '" aria-label="Colour ' + c + '"></button>';
+    }).join('');
+  }
+  $('epSwatches').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-epcolor]');
+    if (!b) return;
+    epColor = b.dataset.epcolor;
+    renderEpSwatches();
+  });
+  $('setProfile').addEventListener('click', function () {
+    if (!meId || !players[meId]) return;
+    $('epName').value = players[meId].name;
+    $('epCDH').value = players[meId].cdh || '';
+    epColor = players[meId].color || COLORS[0];
+    renderEpSwatches();
+    $('epMsg').textContent = '';
+    $('editProfileOverlay').hidden = false;
+  });
+  $('epCancel').addEventListener('click', function () { $('editProfileOverlay').hidden = true; });
+  $('editProfileOverlay').addEventListener('click', function (e) {
+    if (e.target === $('editProfileOverlay')) $('editProfileOverlay').hidden = true;
+  });
+  $('epSave').addEventListener('click', function () {
+    var name = $('epName').value.trim();
+    if (!name) { $('epMsg').textContent = 'Your name cannot be empty.'; $('epMsg').className = 'auth-msg bad'; return; }
+    var clash = Object.keys(players).some(function (id) {
+      return id !== meId && players[id].name.toLowerCase() === name.toLowerCase();
+    });
+    if (clash) { $('epMsg').textContent = 'Another member already uses that name.'; $('epMsg').className = 'auth-msg bad'; return; }
+    $('epSave').disabled = true;
+    Store.updateProfile({ name: name, color: epColor, cdh: $('epCDH').value.trim() })
+      .then(function () { $('editProfileOverlay').hidden = true; })
+      .catch(function () { $('epMsg').textContent = 'Could not save. Try again.'; $('epMsg').className = 'auth-msg bad'; })
+      .then(function () { $('epSave').disabled = false; });
   });
   $('setExport').addEventListener('click', function () {
     if (!meId) return;

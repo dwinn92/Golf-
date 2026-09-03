@@ -93,6 +93,7 @@ print(f"built {out / 'manifest.webmanifest'}")
 vendor_out = out / "vendor"
 vendor_out.mkdir(exist_ok=True)
 (vendor_out / "supabase.js").write_text((root / "web" / "vendor" / "supabase.js").read_text())
+(out / "sw.js").write_text((root / "web" / "sw.js").read_text())
 print(f"built {vendor_out / 'supabase.js'}")
 
 cfg = root / "web" / "config.js"

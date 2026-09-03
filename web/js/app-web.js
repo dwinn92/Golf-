@@ -141,6 +141,13 @@
     }
   }
 
+  // Cache the app on the device so it opens on a course with no signal.
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    global.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () { /* not fatal */ });
+    });
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', safeInit);
   } else {

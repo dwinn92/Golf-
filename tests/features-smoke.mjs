@@ -137,8 +137,10 @@ ok(board.includes('NET') && board.includes('Ashridge'), 'group leaderboard shows
 
 // ---- 5. CDH ----
 await page.click('.tab[data-nav="me"]');
-page.once('dialog', d => d.accept('401 8823'));
-await page.click('#setCDH');
+await page.click('#setProfile');
+await page.waitForSelector('#editProfileOverlay:not([hidden])');
+await page.fill('#epCDH', '401 8823');
+await page.click('#epSave');
 await page.waitForFunction(() => document.getElementById('setCDHVal').textContent === '401 8823');
 ok((await page.textContent('#meSub')).includes('CDH 401 8823'), 'CDH number saved and shown on the profile');
 
