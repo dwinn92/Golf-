@@ -1,0 +1,9 @@
+# Manual deploys: the app is built by tools/build-web.py into web/dist.
+[build]
+  publish = "web/dist"
+  command = "python3 tools/build-web.py"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
