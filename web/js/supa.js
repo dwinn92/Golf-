@@ -35,7 +35,7 @@
 
   var client = null;
   var listeners = [];
-  var cache = { players: {}, courses: {}, rounds: [], me: null, session: null };
+  var cache = { players: {}, courses: {}, rounds: [], clubs: [], notifications: [], offers: [], me: null, session: null };
 
   function sb() {
     if (!client) {
@@ -91,12 +91,16 @@
    */
   function loadAll() {
     return Promise.all([
-      sb().from('profiles').select('id, display_name, color, cdh, home_tee_id'),
+      sb().from('profiles').select('id, display_name, color, cdh, home_tee_id, target_index'),
       sb().from('courses').select('id, name'),
       sb().from('tees').select('id, course_id, name, par, course_rating, slope_rating, yards, holes, front9, back9'),
       sb().from('tee_confirmations').select('tee_id, user_id'),
       sb().from('rounds').select('*').order('played_on', { ascending: false }).limit(2000),
-      sb().from('round_partners').select('round_id, partner_id')
+      sb().from('round_partners').select('round_id, partner_id'),
+      sb().from('clubs').select('id, name, invite_code, created_by'),
+      sb().from('club_members').select('club_id, user_id, role, joined_at'),
+      sb().from('notifications').select('*').order('created_at', { ascending: false }).limit(200),
+      sb().from('card_offers').select('*').eq('status', 'pending')
     ]).then(function (res) {
       var err = res.find(function (r) { return r.error; });
       if (err) throw err.error;
@@ -105,7 +109,8 @@
       res[0].data.forEach(function (p) {
         players[p.id] = {
           name: p.display_name, color: p.color || '#1F6B4A',
-          cdh: p.cdh || '', homeTeeId: p.home_tee_id || null
+          cdh: p.cdh || '', homeTeeId: p.home_tee_id || null,
+          targetIndex: p.target_index == null ? null : Number(p.target_index)
         };
       });
 
@@ -146,13 +151,35 @@
           holesPlayed: r.holes_played, nineOf: r.nine_of,
           scoringFormat: r.scoring_format, compType: r.comp_type,
           holeScores: r.hole_scores, ratingsEstimated: r.ratings_estimated,
+          attestedBy: r.attested_by || null, attestedAt: r.attested_at || null,
+          stats: r.stats || null, photoPath: r.photo_path || null,
+          allowancePercent: r.allowance_percent == null ? 95 : r.allowance_percent,
+          formatName: r.format_name || null,
           playedWith: partners[r.id] || []
         };
+      });
+
+      var clubs = res[6].data.map(function (c) {
+        return { id: c.id, name: c.name, inviteCode: c.invite_code, createdBy: c.created_by, members: [] };
+      });
+      var byClub = {};
+      clubs.forEach(function (c) { byClub[c.id] = c; });
+      res[7].data.forEach(function (m) {
+        if (byClub[m.club_id]) byClub[m.club_id].members.push({ id: m.user_id, role: m.role, joinedAt: m.joined_at });
       });
 
       cache.players = players;
       cache.courses = courses;
       cache.rounds = rounds;
+      cache.clubs = clubs;
+      cache.notifications = res[8].data.map(function (n) {
+        return { id: n.id, kind: n.kind, actorId: n.actor_id, roundId: n.round_id,
+                 offerId: n.offer_id, body: n.body, readAt: n.read_at, createdAt: n.created_at };
+      });
+      cache.offers = res[9].data.map(function (o) {
+        return { id: o.id, fromUser: o.from_user, toUser: o.to_user,
+                 payload: o.payload, status: o.status, createdAt: o.created_at };
+      });
       emit();
       return cache;
     });
@@ -196,6 +223,7 @@
     if (patch.color != null) row.color = patch.color;
     if (patch.cdh != null) row.cdh = patch.cdh;
     if (patch.homeTeeId !== undefined) row.home_tee_id = patch.homeTeeId;
+    if (patch.targetIndex !== undefined) row.target_index = patch.targetIndex;
     row.updated_at = new Date().toISOString();
     return sb().from('profiles').update(row).eq('id', cache.me).then(check).then(loadAll);
   }
@@ -252,7 +280,11 @@
       scoring_format: round.scoringFormat,
       comp_type: round.compType,
       hole_scores: round.holeScores,
-      ratings_estimated: !!round.ratingsEstimated
+      ratings_estimated: !!round.ratingsEstimated,
+      stats: round.stats || null,
+      photo_path: round.photoPath || null,
+      allowance_percent: round.allowancePercent == null ? 95 : round.allowancePercent,
+      format_name: round.formatName || null
     }).select('id').single().then(function (r) {
       check(r);
       var ids = round.playedWith || [];
@@ -265,6 +297,91 @@
 
   function deleteRound(id) {
     return sb().from('rounds').delete().eq('id', id).then(check).then(loadAll);
+  }
+
+
+  /* ---------------- clubhouses ---------------- */
+
+  function createClub(name) {
+    return sb().rpc('create_club', { club_name: name }).then(check).then(loadAll);
+  }
+  function joinClub(code) {
+    return sb().rpc('join_club_by_code', { code: code }).then(function (r) {
+      if (r.error) {
+        // The function raises a bare `no_such_code`; say something a person
+        // can act on instead.
+        if (/no_such_code/.test(r.error.message || '')) {
+          throw new Error('No clubhouse has that code. Check it with whoever invited you.');
+        }
+        throw r.error;
+      }
+      return r;
+    }).then(loadAll);
+  }
+  function leaveClub(clubId) {
+    return sb().rpc('leave_club', { target_club: clubId }).then(check).then(loadAll);
+  }
+  function renameClub(clubId, name) {
+    return sb().from('clubs').update({ name: name }).eq('id', clubId).then(check).then(loadAll);
+  }
+
+  /* ---------------- attestation ---------------- */
+
+  function attestRound(roundId, on) {
+    return sb().rpc('attest_round', { target_round: roundId, on_off: on !== false })
+      .then(check).then(loadAll);
+  }
+
+  /* ---------------- cards kept for other players ---------------- */
+
+  function offerCards(offers) {
+    if (!offers.length) return Promise.resolve(null);
+    return sb().from('card_offers').insert(offers.map(function (o) {
+      return { from_user: cache.me, to_user: o.toUser, payload: o.payload };
+    })).then(check).then(loadAll);
+  }
+  function resolveOffer(offerId, status) {
+    return sb().from('card_offers')
+      .update({ status: status, resolved_at: new Date().toISOString() })
+      .eq('id', offerId).then(check).then(loadAll);
+  }
+
+  /* ---------------- notifications ---------------- */
+
+  function markNotificationsRead(ids) {
+    if (!ids || !ids.length) return Promise.resolve(null);
+    return sb().from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .in('id', ids).then(check).then(loadAll);
+  }
+  function clearNotifications() {
+    return sb().from('notifications').delete().eq('user_id', cache.me).then(check).then(loadAll);
+  }
+
+  /* ---------------- scorecard photos ---------------- */
+
+  function uploadScorecard(file, roundKey) {
+    var ext = (file.name || '').split('.').pop().toLowerCase();
+    if (!/^(jpe?g|png|webp|heic)$/.test(ext)) ext = 'jpg';
+    var path = cache.me + '/' + roundKey + '.' + ext;
+    return sb().storage.from('scorecards')
+      .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' })
+      .then(function (r) { check(r); return path; });
+  }
+  function scorecardUrl(path) {
+    if (!path) return Promise.resolve(null);
+    return sb().storage.from('scorecards').createSignedUrl(path, 3600)
+      .then(function (r) { return (r.data && r.data.signedUrl) || null; })
+      .catch(function () { return null; });
+  }
+
+  /* ---------------- leaving for good ---------------- */
+
+  function deleteAccount() {
+    return sb().rpc('delete_my_account').then(check).then(function () {
+      // The account is gone; the token in memory now refers to nobody.
+      return sb().auth.signOut().catch(function () { /* already invalid */ });
+    });
   }
 
   function check(res) {
@@ -283,6 +400,11 @@
     updateProfile: updateProfile, addCourseTee: addCourseTee,
     toggleTeeConfirmation: toggleTeeConfirmation,
     postRound: postRound, deleteRound: deleteRound,
+    createClub: createClub, joinClub: joinClub, leaveClub: leaveClub, renameClub: renameClub,
+    attestRound: attestRound, offerCards: offerCards, resolveOffer: resolveOffer,
+    markNotificationsRead: markNotificationsRead, clearNotifications: clearNotifications,
+    uploadScorecard: uploadScorecard, scorecardUrl: scorecardUrl,
+    deleteAccount: deleteAccount,
     cache: cache,
     setMe: function (id) { cache.me = id; },
     configured: !!(SUPABASE_URL && SUPABASE_KEY)

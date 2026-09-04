@@ -55,7 +55,13 @@ html = f"""<!DOCTYPE html>
 <meta name="theme-color" content="#1F6B4A">
 <title>Fairway — golf handicap tracker</title>
 <meta name="description" content="Track your World Handicap System index with your friends: score entry, trends, results and a UK course directory.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/svg+xml" href="/icons/fairway-icon.svg">
+<!-- iOS ignores the manifest's icons and looks for this one. -->
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fairway">
 <link rel="manifest" href="/manifest.webmanifest">
 </head>
 <body>
@@ -89,6 +95,14 @@ print(f"built {out / 'index.html'} ({len(html) // 1024} KB)")
 (out / "manifest.webmanifest").write_text((root / "web" / "manifest.webmanifest").read_text())
 (out / "_redirects").write_text("/*  /index.html  200\n")
 print(f"built {out / 'manifest.webmanifest'}")
+
+icons_src = root / "web" / "icons"
+icons_out = out / "icons"
+icons_out.mkdir(exist_ok=True)
+for f in sorted(icons_src.iterdir()):
+    if f.is_file():
+        (icons_out / f.name).write_bytes(f.read_bytes())
+print(f"built {icons_out} ({len(list(icons_out.iterdir()))} icons)")
 
 vendor_out = out / "vendor"
 vendor_out.mkdir(exist_ok=True)

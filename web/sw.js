@@ -5,8 +5,9 @@
  * the device. Only the shell is cached — never Supabase traffic, which must
  * always be live so nobody is shown a stale scoring record.
  */
-const CACHE = 'fairway-v2';
-const SHELL = ['/', '/index.html', '/config.js', '/vendor/supabase.js', '/manifest.webmanifest'];
+const CACHE = 'fairway-v3';
+const SHELL = ['/', '/index.html', '/config.js', '/vendor/supabase.js', '/manifest.webmanifest',
+               '/icons/icon-192.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

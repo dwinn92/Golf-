@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Fairway">
+  <rect width="512" height="512" fill="#163F2E"/>
+  <ellipse cx="256" cy="396" rx="168" ry="40" fill="#1F6B4A"/>
+  <rect x="247" y="120" width="12" height="262" rx="6" fill="#F4F4EF"/>
+  <path d="M259 128 L386 164 L259 200 Z" fill="#C8A63C"/>
+  <circle cx="168" cy="374" r="28" fill="#FFFFFF"/>
+  <circle cx="256" cy="386" r="15" fill="#0B1F16" opacity=".55"/>
+</svg>

@@ -16,6 +16,15 @@
   var Store = {
     needsProfilePicker: true,
 
+    /* No accounts behind this build: everyone sharing the artifact shares one
+       document store and a device simply says which member it is. Anything
+       that depends on a real signed-in identity is therefore off, and the UI
+       hides those controls rather than offering something that cannot work. */
+    features: {
+      accounts: false, clubs: false, attestation: false,
+      offers: false, notifications: false, photos: false
+    },
+
     connect: function () {
       var use = (global.claude && global.claude.use) ? global.claude.use.bind(global.claude) : null;
       if (!use) return Promise.resolve(false);
@@ -109,6 +118,17 @@
 
     deleteRound: function (id) {
       return db.collection('rounds').doc(id).delete();
+    },
+
+    /* Saving a file goes through the artifact host, which asks the viewer
+       before anything lands on their machine. */
+    download: function (filename, mime, text) {
+      var use = (global.claude && global.claude.use) ? global.claude.use.bind(global.claude) : null;
+      if (!use) return Promise.reject(new Error('unavailable'));
+      return use('downloads').then(function (dl) {
+        if (!dl) throw new Error('unavailable');
+        return dl.save({ filename: filename, data: text });
+      });
     }
   };
 

@@ -288,4 +288,46 @@ test('computeRecord: results map back to input order', () => {
   assert.deepStrictEqual(rec.counted, [0]);
 });
 
+
+/* ---------------- handicap allowances (Appendix C) ---------------- */
+
+test('allowance: singles stroke play is 95% of the course handicap', () => {
+  assert.strictEqual(WHS.playingHandicap(18, 95), 17);   // 17.1
+  assert.strictEqual(WHS.playingHandicap(24, 95), 23);   // 22.8
+});
+
+test('allowance: four-ball better ball is 85% of each player', () => {
+  const t = WHS.teamAllowance('fourball', [10, 20]);
+  assert.deepStrictEqual(t.perPlayer, [9, 17]);          // 8.5 -> 9, 17.0
+  assert.strictEqual(t.team, null);
+});
+
+test('allowance: foursomes is 50% of the combined course handicaps', () => {
+  assert.strictEqual(WHS.teamAllowance('foursomes', [12, 20]).team, 16);
+  assert.strictEqual(WHS.teamAllowance('foursomes', [9, 14]).team, 12);   // 11.5 -> 12
+});
+
+test('allowance: greensomes is 60% of the lower plus 40% of the higher', () => {
+  assert.strictEqual(WHS.teamAllowance('greensomes', [12, 20]).team, 15); // 7.2 + 8.0
+  // order of the pair must not matter: the lower handicap always takes 60%
+  assert.strictEqual(WHS.teamAllowance('greensomes', [20, 12]).team, 15);
+});
+
+test('allowance: scramble percentages run lowest handicap first', () => {
+  assert.strictEqual(WHS.teamAllowance('scramble4', [4, 10, 16, 24]).team, 8);  // 1+2+2.4+2.4
+  assert.strictEqual(WHS.teamAllowance('scramble4', [24, 16, 10, 4]).team, 8);  // sorted first
+  assert.strictEqual(WHS.teamAllowance('scramble2', [10, 20]).team, 7);         // 3.5 + 3.0
+});
+
+test('allowance: a side of the wrong size returns null rather than a guess', () => {
+  assert.strictEqual(WHS.teamAllowance('foursomes', [12]), null);
+  assert.strictEqual(WHS.teamAllowance('scramble4', [4, 10, 16]), null);
+  assert.strictEqual(WHS.teamAllowance('greensomes', [1, 2, 3]), null);
+});
+
+test('allowance: an unknown format falls back to singles, never to nothing', () => {
+  assert.strictEqual(WHS.allowanceById('nonsense').id, 'singles');
+  assert.strictEqual(WHS.allowanceById('nonsense').percent, 95);
+});
+
 console.log('\n' + passed + ' tests passed');

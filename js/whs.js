@@ -398,12 +398,94 @@
     };
   }
 
+
+  /**
+   * Handicap allowances (Rules of Handicapping, Appendix C, as operated by
+   * England Golf).
+   *
+   * An allowance changes the strokes a player receives in a given format of
+   * play. It never touches the scoring record: the Score Differential of a
+   * round is computed from the adjusted gross score and the ratings, whatever
+   * allowance the competition used.
+   *
+   * `percent` formats apply straight to each player's Course Handicap.
+   * `combine` formats need the whole side's handicaps, so they are computed by
+   * teamAllowance() below rather than shown for one player alone.
+   */
+  var ALLOWANCES = [
+    { id: 'singles',          name: 'Singles stroke play',  percent: 95 },
+    { id: 'stableford',       name: 'Individual Stableford', percent: 95 },
+    { id: 'singles-match',    name: 'Singles match play',   percent: 100, difference: true },
+    { id: 'fourball',         name: 'Four-ball better ball', percent: 85 },
+    { id: 'fourball-match',   name: 'Four-ball match play',  percent: 90, difference: true },
+    { id: 'foursomes',        name: 'Foursomes',            combine: 'foursomes' },
+    { id: 'foursomes-match',  name: 'Foursomes match play', combine: 'foursomes', difference: true },
+    { id: 'greensomes',       name: 'Greensomes',           combine: 'greensomes' },
+    { id: 'scramble4',        name: 'Scramble (4 players)', combine: 'scramble4' },
+    { id: 'scramble2',        name: 'Scramble (2 players)', combine: 'scramble2' }
+  ];
+
+  function allowanceById(id) {
+    for (var i = 0; i < ALLOWANCES.length; i++) if (ALLOWANCES[i].id === id) return ALLOWANCES[i];
+    return ALLOWANCES[0];
+  }
+
+  /**
+   * The side's handicap for a format that combines players.
+   *
+   *   foursomes  : 50% of the combined Course Handicaps of the two partners
+   *   greensomes : 60% of the lower Course Handicap + 40% of the higher
+   *   scramble 4 : 25/20/15/10% of the Course Handicaps, lowest handicap first
+   *   scramble 2 : 35% of the lower + 15% of the higher
+   *
+   * Each component is kept unrounded and only the side's total is rounded, as
+   * the Rules require. Returns null when the side is the wrong size for the
+   * format, rather than inventing a number.
+   */
+  function teamAllowance(formatId, courseHandicaps) {
+    var f = allowanceById(formatId);
+    var hcps = (courseHandicaps || []).slice().sort(function (a, b) { return a - b; });
+    if (!f.combine) {
+      if (!hcps.length) return null;
+      return {
+        perPlayer: hcps.map(function (h) { return playingHandicap(h, f.percent); }),
+        team: null,
+        note: f.percent + '% of each player'
+      };
+    }
+    if (f.combine === 'foursomes') {
+      if (hcps.length !== 2) return null;
+      return { perPlayer: null, team: roundWhole((hcps[0] + hcps[1]) * 0.5),
+               note: '50% of the combined course handicaps' };
+    }
+    if (f.combine === 'greensomes') {
+      if (hcps.length !== 2) return null;
+      return { perPlayer: null, team: roundWhole(hcps[0] * 0.6 + hcps[1] * 0.4),
+               note: '60% of the lower + 40% of the higher' };
+    }
+    if (f.combine === 'scramble4') {
+      if (hcps.length !== 4) return null;
+      return { perPlayer: null,
+               team: roundWhole(hcps[0] * 0.25 + hcps[1] * 0.20 + hcps[2] * 0.15 + hcps[3] * 0.10),
+               note: '25/20/15/10% of the course handicaps, lowest first' };
+    }
+    if (f.combine === 'scramble2') {
+      if (hcps.length !== 2) return null;
+      return { perPlayer: null, team: roundWhole(hcps[0] * 0.35 + hcps[1] * 0.15),
+               note: '35% of the lower + 15% of the higher' };
+    }
+    return null;
+  }
+
   var WHS = {
     MAX_HANDICAP_INDEX: MAX_HANDICAP_INDEX,
     roundTenth: roundTenth,
     scoreDifferential: scoreDifferential,
     courseHandicap: courseHandicap,
     playingHandicap: playingHandicap,
+    ALLOWANCES: ALLOWANCES,
+    allowanceById: allowanceById,
+    teamAllowance: teamAllowance,
     strokesOnHole: strokesOnHole,
     netDoubleBogey: netDoubleBogey,
     netPar: netPar,
