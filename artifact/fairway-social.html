@@ -513,6 +513,81 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 .set-row .sr-label { font-size: 14.5px; font-weight: 500; color: var(--ink); }
 .set-row .sr-val { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 10.5px; color: var(--ink-4); letter-spacing: .03em; }
 .set-row .sr-chev { font-size: 14px; color: var(--faint-3); }
+.hd-status { margin: 4px 0 10px; font-family: var(--mono); font-size: 10px; line-height: 1.7; letter-spacing: .03em; color: var(--ink-4); }
+.hd-status .good { color: var(--green); }
+.hd-status .bad { color: var(--danger); }
+.card-photo { margin-top: 14px; }
+.card-photo img { width: 100%; border-radius: 16px; border: 1px solid var(--hair-2); display: block; }
+.hc-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hair);
+}
+.st-tog {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.st-tog[aria-pressed="true"] { background: var(--green-tint); border-color: var(--green); color: var(--green); }
+.st-tog:disabled { opacity: .35; }
+.st-step { display: flex; align-items: center; gap: 6px; }
+.st-step .st-lab { font-family: var(--mono); font-size: 9.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-4); }
+.st-step button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.st-step b { min-width: 16px; text-align: center; font-size: 14px; font-weight: 600; }
+.st-show {
+  margin-top: 12px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  color: var(--ink-4);
+}
+.gb-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 12px 22px 2px;
+  scrollbar-width: none;
+}
+.gb-strip::-webkit-scrollbar { display: none; }
+.gb-strip .gb {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 12px 0 6px;
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.gb-strip .gb[aria-pressed="true"] { background: var(--green-tint); border-color: var(--green); color: var(--green); }
+.gb-strip .gb .gb-done { font-family: var(--mono); font-size: 9.5px; font-weight: 600; color: var(--faint); letter-spacing: .04em; }
+.gb-strip .gb[aria-pressed="true"] .gb-done { color: var(--green); }
 .bell {
   position: relative;
   width: 40px;
@@ -825,6 +900,13 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       <div class="ff"><span class="label">Yardage (optional)</span><input type="number" id="fcYards" min="1000" max="8500" step="1" placeholder="6241"></div>
       <details class="holes-details">
         <summary>Hole pars &amp; stroke indexes (enables hole-by-hole)</summary>
+        <div class="ff" style="margin-top:10px"><span class="label">Pars, hole 1 to 18</span>
+          <input type="text" id="fcPastePars" inputmode="numeric" autocomplete="off" spellcheck="false"
+                 placeholder="4 5 3 4 4 3 5 4 4 4 3 5 4 4 3 5 4 4"></div>
+        <div class="ff"><span class="label">Stroke indexes, hole 1 to 18</span>
+          <input type="text" id="fcPasteSis" inputmode="numeric" autocomplete="off" spellcheck="false"
+                 placeholder="5 11 17 1 7 15 9 3 13 4 16 10 2 8 18 12 6 14"></div>
+        <p class="hd-status" id="fcHoleStatus"></p>
         <div class="hd-grid" id="fcHoles"></div>
       </details>
       <p style="font-size:11.5px;color:var(--ink-4);line-height:1.5;margin:12px 0 0">CR and Slope are printed on the scorecard — they aren't in any open dataset, and the handicap maths needs them.</p>
@@ -927,6 +1009,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     </div>
 
     <div id="entryHoles" hidden>
+      <div class="gb-strip" id="gbStrip" role="group" aria-label="Whose score you are entering" hidden></div>
       <div class="hole-progress">
         <div class="hp-row">
           <span class="label" id="hpLabel">Hole 1 of 18</span>
@@ -948,6 +1031,19 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
           <button class="stepper plus" id="stepPlus" aria-label="One stroke more">+</button>
         </div>
         <div class="hc-foot" id="hcFoot"></div>
+        <div class="hc-stats" id="hcStats" hidden>
+          <button class="st-tog" id="statFw" aria-pressed="false">Fairway</button>
+          <button class="st-tog" id="statGir" aria-pressed="false">Green in reg</button>
+          <span class="st-step"><span class="st-lab">Putts</span>
+            <button data-putt="-1" aria-label="One putt fewer">−</button>
+            <b class="num" id="statPutts">–</b>
+            <button data-putt="1" aria-label="One putt more">+</button></span>
+          <span class="st-step"><span class="st-lab">Pen</span>
+            <button data-pen="-1" aria-label="One penalty fewer">−</button>
+            <b class="num" id="statPen">0</b>
+            <button data-pen="1" aria-label="One penalty more">+</button></span>
+        </div>
+        <button class="st-show mono" id="statShow">+ TRACK FAIRWAYS, GREENS &amp; PUTTS</button>
       </div>
       <div class="hole-grid" id="holeGrid"></div>
     </div>
@@ -996,6 +1092,12 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     <div class="with-strip">
       <span class="label">Played with</span>
       <div class="with-chips" id="entryWith"></div>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
+      <button class="ghost-btn" id="photoPick" hidden style="margin-top:12px">Attach a photo of the card</button>
+      <div id="photoPreview"></div>
+      <button class="ghost-btn" id="groupToggle" hidden style="margin-top:12px">Keep the card for the whole group</button>
+      <p class="footer-note" id="groupHint" hidden style="padding:8px 0 0">Each player gets their own card to review and post — nothing lands in
+        anyone else's record until they say so.</p>
     </div>
 
     <div style="padding:18px 22px 24px">
@@ -1055,6 +1157,8 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     </div>
     <p class="footer-note" id="rdNoCard" hidden>This round was posted as a total, so there is no hole-by-hole card.</p>
 
+    <div id="rdPhoto" hidden></div>
+    <div id="rdStats" hidden></div>
     <div id="rdWith"></div>
     <div id="rdAttest" style="margin-top:14px"></div>
 
@@ -1760,6 +1864,9 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       $('rdNoCard').hidden = false;
     }
 
+    renderRoundPhoto(r);
+    renderRoundStats(r);
+
     var names = (r.playedWith || []).map(playerName);
     $('rdWith').innerHTML = names.length
       ? '<div class="eyebrow" style="padding:14px 0 6px">Played with</div>' +
@@ -1771,6 +1878,25 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     renderAttestRow(r, mine);
     $('rdActions').hidden = !mine;
     $('roundOverlay').hidden = false;
+  }
+
+  function pct(hit, of) { return of ? Math.round(100 * hit / of) + '%' : '–'; }
+  function renderRoundStats(r) {
+    var st = r.stats;
+    var el = $('rdStats');
+    if (!st) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    el.innerHTML = '<div class="eyebrow" style="padding:14px 0 6px">Detail</div>' +
+      '<div class="stat-row" style="margin:0">' +
+      '<div class="st-cell"><div class="label">Fairways</div><div class="st-val num">' +
+        pct(st.fairwaysHit, st.fairwaysOf) + '</div></div>' +
+      '<div class="st-cell"><div class="label">Greens</div><div class="st-val num">' +
+        pct(st.gir, st.girOf) + '</div></div>' +
+      '<div class="st-cell"><div class="label">Putts</div><div class="st-val num">' +
+        (st.puttHoles ? st.putts : '–') + '</div></div>' +
+      '</div>' +
+      (st.penalties ? '<p class="footer-note" style="padding:6px 0 0">' + st.penalties +
+        ' penalty stroke' + (st.penalties === 1 ? '' : 's') + '.</p>' : '');
   }
 
   /* ---------------- marker attestation ---------------- */
@@ -2390,6 +2516,79 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     $('fcHoles').innerHTML = cells;
   }
   $('courseFormCancel').addEventListener('click', function () { $('courseFormCard').hidden = true; });
+  /* Typing 36 numbers into 36 boxes is the reason most tees never get a hole
+     card. Reading them off the scorecard in one go is far quicker, so accept
+     a run of numbers separated by anything, and say plainly what is still
+     wrong rather than only complaining at save time. */
+  function spreadNumbers(text, attr) {
+    var nums = String(text).match(/-?\d+/g) || [];
+    for (var i = 0; i < 18; i++) {
+      var box = document.querySelector('[data-' + attr + '="' + i + '"]');
+      if (box) box.value = nums[i] == null ? '' : nums[i];
+    }
+    return nums.length;
+  }
+  function readFcHoles() {
+    var pars = [], sis = [];
+    for (var i = 0; i < 18; i++) {
+      pars.push(parseInt((document.querySelector('[data-fcpar="' + i + '"]') || {}).value, 10));
+      sis.push(parseInt((document.querySelector('[data-fcsi="' + i + '"]') || {}).value, 10));
+    }
+    return { pars: pars, sis: sis };
+  }
+  function fcHoleProblems() {
+    var v = readFcHoles();
+    var par = parseInt($('fcPar').value, 10);
+    var haveP = v.pars.filter(function (x) { return x > 0; }).length;
+    var haveS = v.sis.filter(function (x) { return x > 0; }).length;
+    var out = { pars: '', sis: '', complete: false, empty: haveP === 0 && haveS === 0 };
+    if (haveP === 0) out.pars = '18 pars needed';
+    else if (haveP < 18) out.pars = haveP + '/18 pars';
+    else {
+      var sum = v.pars.reduce(function (a, b) { return a + b; }, 0);
+      out.pars = (par > 0 && sum !== par)
+        ? 'pars add to ' + sum + ', tee par is ' + par
+        : 'pars add to ' + sum + ' \u2713';
+      out.parsOk = !(par > 0 && sum !== par);
+    }
+    if (haveS === 0) out.sis = '18 stroke indexes needed';
+    else if (haveS < 18) out.sis = haveS + '/18 stroke indexes';
+    else {
+      var seen = {}, dup = null, range = null;
+      v.sis.forEach(function (x) {
+        if (x < 1 || x > 18) range = x;
+        else if (seen[x]) dup = x; else seen[x] = true;
+      });
+      out.sis = range != null ? 'stroke index ' + range + ' is outside 1–18'
+        : dup != null ? 'stroke index ' + dup + ' is used twice'
+        : 'stroke indexes 1–18, each once \u2713';
+      out.sisOk = range == null && dup == null;
+    }
+    out.complete = haveP === 18 && haveS === 18 && out.parsOk && out.sisOk;
+    return out;
+  }
+  function renderFcHoleStatus() {
+    var st = fcHoleProblems();
+    if (st.empty) {
+      $('fcHoleStatus').innerHTML = 'Optional — without a card you can still post a total score.';
+      return;
+    }
+    var cls = function (okFlag) { return okFlag ? 'good' : 'bad'; };
+    $('fcHoleStatus').innerHTML =
+      '<span class="' + cls(st.parsOk) + '">' + esc(st.pars) + '</span><br>' +
+      '<span class="' + cls(st.sisOk) + '">' + esc(st.sis) + '</span>';
+  }
+  $('fcPastePars').addEventListener('input', function () {
+    spreadNumbers(this.value, 'fcpar');
+    renderFcHoleStatus();
+  });
+  $('fcPasteSis').addEventListener('input', function () {
+    spreadNumbers(this.value, 'fcsi');
+    renderFcHoleStatus();
+  });
+  $('fcHoles').addEventListener('input', renderFcHoleStatus);
+  $('fcPar').addEventListener('input', renderFcHoleStatus);
+
   $('fcSave').addEventListener('click', function () {
     var name = $('fcName').value.trim();
     var teeName = $('fcTee').value.trim();
@@ -2424,7 +2623,10 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       confirmedBy: meId ? [meId] : [] };
     Store.addCourseTee(name, newTee).then(function () {
       $('courseFormCard').hidden = true;
-      ['fcName', 'fcTee', 'fcPar', 'fcCR', 'fcSR', 'fcYards'].forEach(function (id) { $(id).value = ''; });
+      ['fcName', 'fcTee', 'fcPar', 'fcCR', 'fcSR', 'fcYards', 'fcPastePars', 'fcPasteSis']
+        .forEach(function (id) { $(id).value = ''; });
+      renderFcHoles();
+      renderFcHoleStatus();
     }).catch(function (err) { alert('Could not save (' + (err && err.code) + '). Try again.'); });
   });
 
@@ -2504,9 +2706,17 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
   /* ---- drafts: an in-progress round survives leaving the page ---- */
 
+  function draftScoredCount(e) {
+    if (e.group && e.group.scores) {
+      return Object.keys(e.group.scores).reduce(function (t, id) {
+        return t + (e.group.scores[id] || []).filter(function (x) { return x != null; }).length;
+      }, 0);
+    }
+    return (e.holes || []).filter(function (x) { return x != null; }).length;
+  }
   function saveDraft() {
     if (!entry) return;
-    var scored = entry.holes.filter(function (x) { return x != null; }).length;
+    var scored = draftScoredCount(entry);
     // only worth keeping once something has actually been entered
     if (!scored && !entry.gross && !entry.points) { clearDraft(); return; }
     tryStore(function () {
@@ -2521,13 +2731,22 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     var d = tryStore(function () { return JSON.parse(localStorage.getItem(DRAFT_KEY)); });
     if (!d || !d.entry || d.playerId !== meId) return null;
     if (!courses[d.courseId] || !courses[d.courseId].tees[d.teeIdx]) return null;
+    // entry.holes is the same array object as the current player's row on a
+    // group card. JSON gives back two separate copies, so re-link them or
+    // strokes typed after a resume would vanish from the group's card.
+    var g = d.entry.group;
+    if (g && g.scores) {
+      if (!g.scores[g.cur]) g.cur = meId;
+      if (g.scores[g.cur]) d.entry.holes = g.scores[g.cur];
+      else d.entry.group = null;
+    }
     return d;
   }
   function renderDraftBanner() {
     var holder = $('draftBanner');
     var d = (!entry) ? loadDraft() : null;
     if (!d) { holder.innerHTML = ''; return; }
-    var scored = (d.entry.holes || []).filter(function (x) { return x != null; }).length;
+    var scored = draftScoredCount(d.entry);
     var where = courses[d.courseId].name;
     var what = scored ? scored + ' hole' + (scored === 1 ? '' : 's') + ' in'
       : (d.entry.points ? d.entry.points + ' points entered' : d.entry.gross + ' entered');
@@ -2576,12 +2795,232 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
    * Strokes received per hole during a 9-hole round come from the equivalent
    * 18-hole Course Handicap, since stroke indexes run 1..18 across the card.
    */
-  function entryStrokeCH() {
+  /* In group mode this follows whoever's card is on screen, so the net double
+     bogey cap is theirs and not the scorer's. */
+  function entryStrokeCH(playerId) {
     var sel = selectedTee();
-    var hi = myHI();
+    var pid = playerId || groupCurrent();
+    var hi = pid === meId ? myHI()
+      : (players[pid] ? recordFor(pid).rec.handicapIndex : null);
     if (!sel || hi == null) return null;
     return WHS.courseHandicap(hi, sel.tee.slopeRating, sel.tee.courseRating, sel.tee.par);
   }
+
+  /* ---------------- keeping the card for a group ---------------- */
+
+  function groupOn() { return !!(entry && entry.group); }
+  function groupCurrent() { return (entry && entry.group && entry.group.cur) || meId; }
+  function groupPlayers() { return (entry && entry.group && entry.group.players) || [meId]; }
+
+  function groupStart() {
+    var partners = Object.keys(entry.playedWith).filter(function (id) {
+      return entry.playedWith[id] && players[id];
+    });
+    if (!partners.length) return;
+    var n = entry.holes.length;
+    var scores = {};
+    // Keep my own strokes: switching to group mode should not lose them.
+    scores[meId] = entry.holes.slice();
+    partners.forEach(function (id) {
+      scores[id] = new Array(n).fill(null);
+    });
+    entry.group = { players: [meId].concat(partners), cur: meId, scores: scores };
+    entry.holes = scores[meId];
+  }
+  function groupStop() {
+    if (!entry || !entry.group) return;
+    entry.holes = entry.group.scores[meId] || entry.holes;
+    entry.group = null;
+  }
+  function groupSwitch(pid) {
+    if (!entry || !entry.group || !entry.group.scores[pid]) return;
+    entry.group.cur = pid;
+    entry.holes = entry.group.scores[pid];
+    // Land on the first hole this player still needs.
+    var next = entry.holes.indexOf(null);
+    entry.cur = next < 0 ? 0 : next;
+    renderEntry();
+  }
+  /* Every player's array is the same length, so the group card grows and
+     shrinks with the hole set exactly as a single card does. */
+  function groupResize(n) {
+    if (!entry || !entry.group) return;
+    groupPlayers().forEach(function (id) {
+      var arr = entry.group.scores[id];
+      if (!arr || arr.length !== n) entry.group.scores[id] = new Array(n).fill(null);
+    });
+    entry.holes = entry.group.scores[groupCurrent()];
+  }
+  function renderGroupStrip() {
+    var strip = $('gbStrip');
+    var canGroup = feature('offers');
+    var partners = entry ? Object.keys(entry.playedWith).filter(function (id) {
+      return entry.playedWith[id] && players[id];
+    }) : [];
+
+    $('groupToggle').hidden = !(canGroup && entry && entry.mode === 'holes' && partners.length);
+    $('groupToggle').textContent = groupOn()
+      ? 'Just keep my own card' : 'Keep the card for the whole group';
+    $('groupHint').hidden = $('groupToggle').hidden;
+
+    if (!groupOn() || entry.mode !== 'holes') { strip.hidden = true; return; }
+    strip.hidden = false;
+    strip.innerHTML = groupPlayers().map(function (id) {
+      var arr = entry.group.scores[id] || [];
+      var done = arr.filter(function (x) { return x != null; }).length;
+      return '<button class="gb" data-gbplayer="' + esc(id) + '" aria-pressed="' +
+        (id === groupCurrent()) + '">' + avatarHTML(id, 26, 10) +
+        '<span>' + esc(id === meId ? 'You' : players[id].name.split(' ')[0]) + '</span>' +
+        '<span class="gb-done">' + done + '/' + arr.length + '</span></button>';
+    }).join('');
+  }
+  $('groupToggle').addEventListener('click', function () {
+    if (!entry) return;
+    if (groupOn()) groupStop(); else groupStart();
+    renderEntry();
+  });
+  $('gbStrip').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-gbplayer]');
+    if (b) groupSwitch(b.dataset.gbplayer);
+  });
+
+  /* ---------------- a photo of the physical card ---------------- */
+
+  var pendingPhoto = null;   // the File chosen for the round being entered
+
+  function renderPhotoPicker() {
+    var on = feature('photos') && !!entry;
+    $('photoPick').hidden = !on;
+    $('photoPick').textContent = pendingPhoto ? 'Choose a different photo' : 'Attach a photo of the card';
+    $('photoPreview').innerHTML = pendingPhoto
+      ? '<p class="footer-note" style="padding:8px 0 0">' + esc(pendingPhoto.name || 'Photo') +
+        ' will be attached — only your clubhouse can see it. ' +
+        '<button id="photoDrop" style="color:var(--danger);font-weight:600">Remove</button></p>'
+      : '';
+  }
+  $('photoPick').addEventListener('click', function () { $('photoInput').click(); });
+  $('photoInput').addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    // The bucket refuses anything over 8 MB, so say so here rather than
+    // failing silently at the end of a round.
+    if (f.size > 8 * 1024 * 1024) {
+      alert('That photo is larger than 8 MB. Take it at a smaller size, or crop it first.');
+      this.value = '';
+      return;
+    }
+    pendingPhoto = f;
+    renderPhotoPicker();
+  });
+  $('photoPreview').addEventListener('click', function (e) {
+    if (e.target.id !== 'photoDrop') return;
+    pendingPhoto = null;
+    $('photoInput').value = '';
+    renderPhotoPicker();
+  });
+
+  function renderRoundPhoto(r) {
+    var el = $('rdPhoto');
+    el.hidden = true;
+    el.innerHTML = '';
+    if (!r.photoPath || !Store.scorecardUrl) return;
+    Store.scorecardUrl(r.photoPath).then(function (url) {
+      // The sheet may have moved on to another round while this resolved.
+      if (!url || !viewedRound || viewedRound.id !== r.id) return;
+      el.hidden = false;
+      el.innerHTML = '<div class="eyebrow" style="padding:14px 0 6px">Card</div>' +
+        '<div class="card-photo"><img alt="Photo of the scorecard" src="' + esc(url) + '"></div>';
+    });
+  }
+
+  /* ---------------- fairways, greens, putts and penalties ---------------- */
+
+  /* Optional detail, and only ever for your own card: inventing a partner's
+     putts from the scorer's memory would be worse than not recording them. */
+  var STATS_KEY = 'fairway.trackstats';
+  var trackStats = tryStore(function () { return localStorage.getItem(STATS_KEY) === '1'; }) || false;
+
+  function blankHoleStat() { return { f: null, g: null, p: null, pen: 0 }; }
+  function entryStats() {
+    if (!entry) return [];
+    if (!entry.stats || entry.stats.length !== entry.holes.length) {
+      entry.stats = entry.holes.map(function () { return blankHoleStat(); });
+    }
+    return entry.stats;
+  }
+  function statsAreMine() { return !groupOn() || groupCurrent() === meId; }
+
+  function renderHoleStats(hole, i) {
+    var show = trackStats && statsAreMine();
+    $('hcStats').hidden = !show;
+    $('statShow').hidden = show || !statsAreMine();
+    $('statShow').textContent = '+ TRACK FAIRWAYS, GREENS & PUTTS';
+    if (!show) return;
+    var st = entryStats()[i] || blankHoleStat();
+    // A par 3 has no fairway to hit, so the control is off rather than lying.
+    var par3 = hole.par <= 3;
+    $('statFw').disabled = par3;
+    $('statFw').setAttribute('aria-pressed', String(!par3 && st.f === true));
+    $('statFw').textContent = par3 ? 'Par 3 — no fairway' : 'Fairway';
+    $('statGir').setAttribute('aria-pressed', String(st.g === true));
+    $('statPutts').textContent = st.p == null ? '–' : st.p;
+    $('statPen').textContent = st.pen || 0;
+  }
+  function updateStat(fn) {
+    if (!entry || !statsAreMine()) return;
+    var arr = entryStats();
+    var st = arr[entry.cur] || (arr[entry.cur] = blankHoleStat());
+    fn(st);
+    saveDraft();
+    renderEntry();
+  }
+  $('statShow').addEventListener('click', function () {
+    trackStats = true;
+    tryStore(function () { localStorage.setItem(STATS_KEY, '1'); });
+    renderEntry();
+  });
+  $('statFw').addEventListener('click', function () { updateStat(function (st) { st.f = st.f === true ? false : true; }); });
+  $('statGir').addEventListener('click', function () { updateStat(function (st) { st.g = st.g === true ? false : true; }); });
+  $('hcStats').addEventListener('click', function (e) {
+    var putt = e.target.closest('[data-putt]');
+    if (putt) {
+      var dp = parseInt(putt.dataset.putt, 10);
+      updateStat(function (st) {
+        st.p = Math.max(0, Math.min(10, (st.p == null ? 2 : st.p) + (st.p == null ? 0 : dp)));
+      });
+      return;
+    }
+    var pen = e.target.closest('[data-pen]');
+    if (pen) {
+      var dn = parseInt(pen.dataset.pen, 10);
+      updateStat(function (st) { st.pen = Math.max(0, Math.min(9, (st.pen || 0) + dn)); });
+    }
+  });
+
+  /** Roll the per-hole detail up into the totals worth showing and storing. */
+  function summariseStats(statList, holeSet, holes) {
+    if (!statList || !statList.length || !holeSet) return null;
+    var out = { fairwaysHit: 0, fairwaysOf: 0, gir: 0, girOf: 0, putts: 0, puttHoles: 0, penalties: 0, perHole: [] };
+    var any = false;
+    statList.forEach(function (st, i) {
+      var h = holeSet[i];
+      st = st || blankHoleStat();
+      out.perHole.push({ f: st.f, g: st.g, p: st.p, pen: st.pen || 0 });
+      if (!h || holes[i] == null) return;
+      if (h.par > 3) {
+        out.fairwaysOf++;
+        if (st.f === true) out.fairwaysHit++;
+        if (st.f != null) any = true;
+      }
+      out.girOf++;
+      if (st.g === true) out.gir++;
+      if (st.g != null) any = true;
+      if (st.p != null) { out.putts += st.p; out.puttHoles++; any = true; }
+      if (st.pen) { out.penalties += st.pen; any = true; }
+    });
+    return any ? out : null;
+  }
+
   function holeCap(hole) {
     var ch = entryStrokeCH();
     return ch == null ? hole.par + 5 : WHS.netDoubleBogey(hole.par, ch, hole.strokeIndex);
@@ -2608,6 +3047,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     if (entry.mode === 'holes' && want && entry.holes.length !== want.length) {
       entry.holes = want.map(function () { return null; });
       entry.cur = 0;
+      groupResize(want.length);
     }
     renderEntry();
   }
@@ -2620,6 +3060,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     entry.holes18 = v;
     entry.holes = [];
     entry.cur = 0;
+    if (groupOn()) entry.group.scores = {};   // rebuilt at the new length below
     syncEntryCtx();
     saveDraft();
   });
@@ -2668,6 +3109,8 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
   function renderEntry() {
     if (!entry) return;
+    renderGroupStrip();
+    renderPhotoPicker();
     var sel = selectedTee();
     var holesMode = entry.mode === 'holes';
     var sfMode = entry.mode === 'stableford';
@@ -2703,6 +3146,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       $('hcFoot').textContent = 'NET DOUBLE BOGEY MAXIMUM — ' + cap + ' STROKES';
       $('stepMinus').disabled = s != null && s <= 1;
       $('stepPlus').disabled = s != null && s >= cap;
+      renderHoleStats(h, i);
 
       $('holeGrid').innerHTML = holeSet.map(function (hh, k) {
         var sk = entry.holes[k];
@@ -2817,30 +3261,109 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     if (b) { entry.cur = parseInt(b.dataset.hole, 10); renderEntry(); }
   });
 
+  /**
+   * Build one player's round from a set of hole scores.
+   *
+   * Every player on a group card gets their own adjusted gross, because the
+   * net double bogey cap depends on their own Course Handicap — using the
+   * scorer's would quietly change everyone else's score.
+   */
+  function buildRoundFor(playerId, holes) {
+    var sel = selectedTee();
+    var r = entryRatings();
+    if (!sel || !r) return null;
+    var hs = entryHoleSet(sel.tee);
+    if (!hs) return null;
+    var strokeCH = entryStrokeCH(playerId);
+    var holesData = hs.map(function (h, i) {
+      return { par: h.par, strokeIndex: h.strokeIndex, strokes: holes[i] };
+    });
+    var ags = strokeCH == null
+      ? holesData.reduce(function (t, h) {
+          return t + (h.strokes == null ? h.par : Math.min(h.strokes, h.par + 5));
+        }, 0)
+      : WHS.adjustedGrossScore(holesData, strokeCH);
+    var nine = entryIsNine();
+    var round = {
+      playerId: playerId, date: entry.date,
+      courseName: sel.course.name, teeName: sel.tee.name,
+      courseRating: r.courseRating, slopeRating: r.slopeRating, par: r.par,
+      pcc: entry.pcc, adjustedGross: ags,
+      playedWith: [], compType: entry.compType,
+      scoringFormat: 'strokes',
+      holesPlayed: nine ? 9 : 18,
+      nineOf: nine ? entry.holes18 : null,
+      holeScores: holes.slice(),
+      allowancePercent: WHS.allowanceById(phFormat).percent || 95,
+      formatName: WHS.allowanceById(phFormat).name,
+      createdAt: new Date().toISOString()
+    };
+    if (nine) {
+      round.nineDifferential = WHS.nineHoleDifferential({
+        adjustedGross9: ags, courseRating9: r.courseRating,
+        slopeRating9: r.slopeRating, pcc: entry.pcc
+      });
+      // Scaled against the index that player was on, not the scorer's.
+      var theirHI = playerId === meId ? myHI() : recordFor(playerId).rec.handicapIndex;
+      round.differential = WHS.nineToEighteenDifferential(round.nineDifferential, theirHI);
+      round.ratingsEstimated = !r.exact;
+    } else {
+      round.differential = WHS.scoreDifferential({
+        adjustedGross: ags, courseRating: r.courseRating,
+        slopeRating: r.slopeRating, pcc: entry.pcc
+      });
+    }
+    return round;
+  }
+
+  /* Hand each partner the card that was kept for them. It is an offer, not a
+     posting: their scoring record is theirs to add to. */
+  function offerGroupCards() {
+    if (!groupOn()) return Promise.resolve(0);
+    var side = groupPlayers().filter(function (id) { return id !== meId; });
+    var list = [];
+    side.forEach(function (id) {
+      var holes = entry.group.scores[id] || [];
+      if (!holes.filter(function (x) { return x != null; }).length) return;   // nothing scored for them
+      var round = buildRoundFor(id, holes);
+      if (!round) return;
+      // Everyone on the card played with everyone else on it.
+      round.playedWith = [meId].concat(side.filter(function (x) { return x !== id; }));
+      list.push({ toUser: id, payload: round });
+    });
+    if (!list.length) return Promise.resolve(0);
+    return Store.offerCards(list).then(function () { return list.length; });
+  }
+
   function submitEntry() {
     var sel = selectedTee();
     var r = entryRatings();
     if (!sel || !entry || !r) return;
     if (!entry.date) { alert('Pick a date.'); return; }
     var nine = entryIsNine();
-    var ags, holeScores = null;
+    var ags, holeScores = null, entryStatsSummary = null;
 
     if (entry.mode === 'holes') {
       var hs = entryHoleSet(sel.tee);
       var scored = entry.holes.filter(function (x) { return x != null; }).length;
       if (!scored) { alert('Score at least one hole.'); return; }
-      var strokeCH = entryStrokeCH();
+      var strokeCH = entryStrokeCH(meId);
       // A hole left blank was not played: net par (Rule 3.2b/2). Before an
       // index exists there are no strokes received, so par + 5 caps instead.
+      var myHoles = groupOn() ? (entry.group.scores[meId] || entry.holes) : entry.holes;
+      if (!myHoles.filter(function (x) { return x != null; }).length) {
+        alert('Score at least one hole on your own card.'); return;
+      }
       var holesData = hs.map(function (h, i) {
-        return { par: h.par, strokeIndex: h.strokeIndex, strokes: entry.holes[i] };
+        return { par: h.par, strokeIndex: h.strokeIndex, strokes: myHoles[i] };
       });
       ags = strokeCH == null
         ? holesData.reduce(function (t, h) {
             return t + (h.strokes == null ? h.par : Math.min(h.strokes, h.par + 5));
           }, 0)
         : WHS.adjustedGrossScore(holesData, strokeCH);
-      holeScores = entry.holes.slice();
+      holeScores = myHoles.slice();
+      entryStatsSummary = summariseStats(entry.stats, hs, myHoles);
     } else if (entry.mode === 'stableford') {
       var pts = parseInt($('pointsInput').value, 10);
       var ph = stablefordHandicap();
@@ -2866,6 +3389,9 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       holesPlayed: nine ? 9 : 18,
       nineOf: nine ? entry.holes18 : null,
       holeScores: holeScores,
+      stats: entryStatsSummary,
+      allowancePercent: WHS.allowanceById(phFormat).percent || 95,
+      formatName: WHS.allowanceById(phFormat).name,
       createdAt: new Date().toISOString()
     };
     if (nine) {
@@ -2884,17 +3410,45 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       });
     }
 
+    // Hand out the group's cards first: if that fails the scorer still has the
+    // entry screen in front of them and can try again, whereas posting my own
+    // round first would close it and lose everyone else's strokes.
+    if (groupOn()) {
+      $('entrySave').disabled = true;
+      offerGroupCards().then(function (n) {
+        postRound(round);
+        if (n) setTimeout(function () {
+          alert(n + ' card' + (n === 1 ? '' : 's') + ' sent. Each player reviews and posts their own.');
+        }, 50);
+      }).catch(function (err) {
+        alert((err && err.message) || 'Could not send the other cards. Your own score has not been posted yet.');
+      }).then(function () { $('entrySave').disabled = false; });
+      return;
+    }
     postRound(round);
   }
 
   /** Write a round, queueing it on the device if the write fails offline. */
   function postRound(round) {
     var replacing = entry && entry.replacing;
-    Store.postRound(round).then(function () {
+    var photo = pendingPhoto;
+    // Upload the card photo first and hang its path on the round. If the
+    // upload fails the round is still posted — a missing photo is a nuisance,
+    // a lost score is not.
+    var withPhoto = (photo && feature('photos') && Store.uploadScorecard)
+      ? Store.uploadScorecard(photo, round.clientId || uid('r'))
+          .then(function (path) { round.photoPath = path; })
+          .catch(function () { round.photoPath = null; })
+      : Promise.resolve();
+
+    withPhoto.then(function () {
+      return Store.postRound(round);
+    }).then(function () {
       // Only remove the original after the replacement is stored, so a failure
       // mid-edit can never lose the round.
       if (replacing) return Store.deleteRound(replacing).catch(function () {});
     }).then(function () {
+      pendingPhoto = null;
       closeEntry(false);
       switchNav('home');
     }).catch(function (err) {
@@ -2931,6 +3485,20 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     if (!chip || !entry) return;
     var id = chip.dataset.with;
     if (entry.playedWith[id]) delete entry.playedWith[id]; else entry.playedWith[id] = true;
+    if (groupOn()) {
+      // The group card follows the tags: someone untagged is no longer on it,
+      // and their strokes go with them rather than lingering unseen.
+      if (!entry.playedWith[id]) {
+        delete entry.group.scores[id];
+        entry.group.players = entry.group.players.filter(function (x) { return x !== id; });
+        if (entry.group.cur === id) { entry.group.cur = meId; entry.holes = entry.group.scores[meId]; }
+        if (entry.group.players.length < 2) groupStop();
+      } else if (entry.group.players.indexOf(id) < 0) {
+        entry.group.players.push(id);
+        entry.group.scores[id] = new Array(entry.holes.length).fill(null);
+      }
+      renderEntry();
+    }
     chip.setAttribute('aria-pressed', String(!!entry.playedWith[id]));
     saveDraft();
   });
