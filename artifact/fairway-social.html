@@ -2129,6 +2129,12 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       cur: 0, playedWith: withMap,
       gross: r.scoringFormat === 'stableford' ? '' : String(r.adjustedGross),
       points: '',
+      // Keep what the round already carries: re-saving an edit should not
+      // silently drop the shot detail or the photo of the card.
+      stats: (r.stats && r.stats.perHole) ? r.stats.perHole.map(function (h) {
+        return { f: h.f, g: h.g, p: h.p, pen: h.pen || 0 };
+      }) : null,
+      keepPhotoPath: r.photoPath || null,
       replacing: r.id
     });
   }
@@ -2689,6 +2695,10 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       date: todayISO(), pcc: 0,
       holes: [], cur: 0, playedWith: {}, gross: '', points: ''
     };
+    // A photo picked for a card that was then abandoned must not follow the
+    // next one onto a different round.
+    pendingPhoto = null;
+    if ($('photoInput')) $('photoInput').value = '';
     $('entryDate').value = entry.date;
     $('entryPCC').value = String(entry.pcc);
     $('grossInput').value = entry.gross || '';
@@ -2700,6 +2710,8 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   function closeEntry(keepDraft) {
     $('entryScreen').hidden = true;
     if (!keepDraft) clearDraft();
+    pendingPhoto = null;
+    if ($('photoInput')) $('photoInput').value = '';
     entry = null;
     scheduleRender();
   }
@@ -3435,6 +3447,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
     // Upload the card photo first and hang its path on the round. If the
     // upload fails the round is still posted — a missing photo is a nuisance,
     // a lost score is not.
+    if (!photo && entry && entry.keepPhotoPath) round.photoPath = entry.keepPhotoPath;
     var withPhoto = (photo && feature('photos') && Store.uploadScorecard)
       ? Store.uploadScorecard(photo, round.clientId || uid('r'))
           .then(function (path) { round.photoPath = path; })

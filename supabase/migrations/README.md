@@ -22,6 +22,10 @@ Applied to project `pcfczfcsousxdytfbisa` in order:
    `anon` inherits) on every security-definer function and grant it back only
    where a signed-in member genuinely needs it.
 
+8. `publish_tables_for_realtime` (`0007_…sql`) — the `supabase_realtime`
+   publication was empty, so the app's realtime subscription had never
+   delivered anything; the tables the UI reads are now published.
+
 They were applied through the Supabase MCP `apply_migration` tool; pull them
 locally with `supabase db pull` if you adopt the CLI workflow.
 
