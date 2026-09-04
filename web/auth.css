@@ -96,3 +96,16 @@
   line-height: 1.5;
   color: var(--faint);
 }
+.boot-row { display: flex; align-items: center; gap: 12px; margin: 6px 0 16px; }
+.boot-text { margin: 0; font-size: .88rem; line-height: 1.45; color: var(--ink-3); }
+.boot-spin {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--hair-2);
+  border-top-color: var(--fairway);
+  border-radius: 50%;
+  animation: boot-spin 900ms linear infinite;
+}
+@keyframes boot-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .boot-spin { animation-duration: 3s; } }

@@ -101,6 +101,37 @@ await page.goto(BASE);
 await page.waitForSelector('#authScreen:not([hidden])');
 ok(!(await visible(page, '#recoverScreen')), 'a normal visit shows sign-in only');
 
+// ---- 8. clock skew on the first load -> retried, not a dead end ----
+// Supabase mints the token on the auth node and PostgREST validates it on
+// another; when their clocks disagree by a fraction of a second the first REST
+// call comes back "JWT issued at future" and the next one succeeds.
+page = await fresh();
+await page.addInitScript(() => { window.__stubFailSelects = 6; });  // one whole loadAll batch
+await page.goto(BASE + '/#access_token=tok&type=magiclink&uid=u-skew&email=skew@example.com');
+await page.waitForSelector('#app:not([hidden])', { timeout: 25000 });
+ok(true, 'a "JWT issued at future" first load is retried and the app still opens');
+ok(!(await visible(page, '#authScreen')), 'clock skew does not bounce you back to sign in');
+ok(!(await visible(page, '#bootScreen')), 'the loading screen goes away once the app is in');
+
+// ---- 9. a load that never succeeds -> keeps you signed in and offers a retry ----
+page = await fresh();
+await page.addInitScript(() => { window.__stubFailSelects = 9999; });
+await page.goto(BASE + '/#access_token=tok&type=magiclink&uid=u-down&email=down@example.com');
+await page.waitForSelector('#bootScreen:not([hidden])', { timeout: 5000 });
+ok(await visible(page, '#bootSpin'), 'a slow load shows a spinner rather than a blank page');
+await page.waitForSelector('#bootRetry:not([hidden])', { timeout: 30000 });
+const bootMsg = await page.textContent('#bootText');
+ok(/still signed in/i.test(bootMsg), 'a failed load says you are still signed in: "' + bootMsg + '"');
+ok(!(await visible(page, '#authScreen')), 'a failed load does not dump you on the sign-in form');
+ok(!(await visible(page, '#app')), 'a failed load does not open a half-empty app');
+ok(await page.evaluate(() => window.__stubRefreshes > 0), 'a fresh token was requested along the way');
+
+// the retry button works once the API recovers
+await page.evaluate(() => { window.__stubFailSelects = 0; });
+await page.click('#bootRetry');
+await page.waitForSelector('#app:not([hidden])', { timeout: 25000 });
+ok(true, '"Try again" gets you in once the API recovers');
+
 if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
 console.log('\nAUTH FLOWS PASSED');
 await browser.close();

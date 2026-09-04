@@ -78,9 +78,10 @@
     return sb().auth.updateUser({ password: password });
   }
   function signOut() { return sb().auth.signOut(); }
-  function updatePassword(password) { return sb().auth.updateUser({ password: password }); }
   function onAuth(fn) { return sb().auth.onAuthStateChange(fn); }
   function getSession() { return sb().auth.getSession(); }
+  /** Trade the refresh token for a newly minted access token. */
+  function refreshSession() { return sb().auth.refreshSession(); }
 
   /* ---------------- reads ---------------- */
 
@@ -160,13 +161,30 @@
   /* ---------------- realtime ---------------- */
 
   var channel = null;
+  var reloadTimer = null;
+
+  /*
+   * One posted round can arrive as several change events — the round row, its
+   * partner rows, the course and tee it created — and reloading per event
+   * meant six full clubhouse fetches for one action. Coalesce them into a
+   * single reload just after the burst settles.
+   */
+  function scheduleReload() {
+    if (reloadTimer) return;
+    reloadTimer = setTimeout(function () {
+      reloadTimer = null;
+      loadAll().catch(function () { /* the next change will try again */ });
+    }, 350);
+  }
+
   function subscribe() {
     if (channel) return;
     channel = sb().channel('clubhouse')
-      .on('postgres_changes', { event: '*', schema: 'public' }, function () { loadAll(); })
+      .on('postgres_changes', { event: '*', schema: 'public' }, scheduleReload)
       .subscribe();
   }
   function unsubscribe() {
+    if (reloadTimer) { clearTimeout(reloadTimer); reloadTimer = null; }
     if (channel) { sb().removeChannel(channel); channel = null; }
   }
 
@@ -259,8 +277,9 @@
     signUp: signUp, signIn: signIn, signInWithLink: signInWithLink,
     resetPassword: resetPassword, updatePassword: updatePassword,
     signOut: signOut, onAuth: onAuth, getSession: getSession,
+    refreshSession: refreshSession,
     loadAll: loadAll, subscribe: subscribe, unsubscribe: unsubscribe, onChange: onChange,
-    updatePassword: updatePassword, linkParams: linkParams, readLinkParams: readLinkParams,
+    linkParams: linkParams, readLinkParams: readLinkParams,
     updateProfile: updateProfile, addCourseTee: addCourseTee,
     toggleTeeConfirmation: toggleTeeConfirmation,
     postRound: postRound, deleteRound: deleteRound,

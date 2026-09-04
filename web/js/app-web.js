@@ -13,6 +13,7 @@
   'use strict';
   var D = global.FairwayData;
   var booted = false;
+  var starting = false;
   var pendingRecovery = false;
 
   /**
@@ -43,17 +44,58 @@
     } catch (e) { global.location.hash = ''; }
   }
 
+  /*
+   * The first load after an email link can lose a race with the clock.
+   *
+   * Auth mints the token on one machine and the API validates it on another;
+   * when the API's clock is a fraction of a second behind, the very first REST
+   * call comes back "JWT issued at future" and the same call succeeds moments
+   * later. Anything transient looks the same from here — a dropped request on
+   * a phone leaving the car park, a cold API node — so the answer is the same:
+   * wait a moment and ask again rather than throwing away a valid session.
+   */
+  var RETRY_DELAYS = [400, 1200, 2500, 5000];
+
+  function wait(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  function loadWithRetry(attempt) {
+    return D.loadAll().catch(function (err) {
+      var offline = global.navigator && global.navigator.onLine === false;
+      if (attempt >= RETRY_DELAYS.length || offline) throw err;
+      // From the second attempt on, ask for a fresh token as well: it costs
+      // one request and covers the case where this one really is unusable.
+      var refresh = (attempt >= 1 && D.refreshSession)
+        ? D.refreshSession().catch(function () { /* keep the token we have */ })
+        : Promise.resolve();
+      return refresh
+        .then(function () { return wait(RETRY_DELAYS[attempt]); })
+        .then(function () { return loadWithRetry(attempt + 1); });
+    });
+  }
+
   function startApp(session) {
-    if (booted) return;
+    // Two callers race here — the auth event and the initial getSession — and
+    // a retrying load holds the door open for seconds, so guard both states.
+    if (booted || starting) return;
+    starting = true;
     D.setMe(session.user.id);
-    global.FairwayAuthUI.hide();
-    D.loadAll().then(function () {
+    global.FairwayAuthUI.showLoading();
+    loadWithRetry(0).then(function () {
+      starting = false;
       D.subscribe();
       booted = true;
+      global.FairwayAuthUI.hide();
       document.getElementById('app').hidden = false;
       if (typeof global.__fairwayBoot === 'function') global.__fairwayBoot();
     }).catch(function (err) {
-      global.FairwayAuthUI.show('Could not load your clubhouse: ' + (err.message || err));
+      starting = false;
+      // You are signed in — this is a loading failure, not a sign-in one.
+      global.FairwayAuthUI.showRetry(
+        'Could not load your clubhouse: ' + ((err && err.message) || err) +
+        '. You are still signed in — this is usually temporary.',
+        function () { startApp(session); });
     });
   }
 

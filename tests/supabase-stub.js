@@ -84,6 +84,13 @@
       then(res, rej) {
         let out;
         try {
+          // Let a test reproduce the clock-skew race: the API rejects the
+          // first calls with a token it thinks is from the future, then the
+          // same calls succeed.
+          if (window.__stubFailSelects > 0 && !q._result) {
+            window.__stubFailSelects--;
+            return Promise.resolve({ data: null, error: { message: 'JWT issued at future', status: 401 } }).then(res, rej);
+          }
           if (q._result) out = q._result;
           else {
             out = tables[table].filter(r => match(r, q._f));
@@ -146,7 +153,8 @@
             return { data: { user: session.user }, error: null };
           },
           onAuthStateChange(cb) { authCbs.push(cb); if (recoveryFromHash) setTimeout(() => cb('PASSWORD_RECOVERY', session), 0); return { data: { subscription: { unsubscribe() {} } } }; },
-          async getSession() { return { data: { session } }; }
+          async getSession() { return { data: { session } }; },
+          async refreshSession() { window.__stubRefreshes = (window.__stubRefreshes || 0) + 1; return { data: { session }, error: null }; }
         }
       };
     }

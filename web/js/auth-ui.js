@@ -137,10 +137,34 @@
     }).then(function () { $('recoverSubmit').disabled = false; });
   }
 
+  /* ---- the boot screen: shown while the clubhouse loads ---- */
+
+  var onRetry = null;
+
+  function boot(opts) {
+    $('authScreen').hidden = true;
+    $('recoverScreen').hidden = true;
+    $('app').hidden = true;
+    $('bootScreen').hidden = false;
+    $('bootText').textContent = opts.text;
+    $('bootSpin').hidden = !opts.busy;
+    $('bootRetry').hidden = !opts.retry;
+    $('bootSignOut').hidden = !opts.retry;
+    onRetry = opts.retry || null;
+  }
+
   global.FairwayAuthUI = {
     setMode: setMode,
     setMsg: setMsg,
     init: function () {
+      $('bootRetry').addEventListener('click', function () {
+        var fn = onRetry;
+        if (fn) fn();
+      });
+      $('bootSignOut').addEventListener('click', function () {
+        D.signOut().then(function () { global.location.reload(); },
+          function () { global.location.reload(); });
+      });
       $('recoverForm').addEventListener('submit', saveNewPassword);
       $('recoverSkip').addEventListener('click', function () { global.FairwayRecovered(); });
       $('authForm').addEventListener('submit', submit);
@@ -153,12 +177,30 @@
     show: function (message, kind) {
       $('authScreen').hidden = false;
       $('recoverScreen').hidden = true;
+      $('bootScreen').hidden = true;
       $('app').hidden = true;
       if (message) setMsg(message, kind || 'bad');
     },
-    hide: function () { $('authScreen').hidden = true; $('recoverScreen').hidden = true; },
+    hide: function () {
+      $('authScreen').hidden = true;
+      $('recoverScreen').hidden = true;
+      $('bootScreen').hidden = true;
+    },
+    /** Signed in, waiting on the first load — never a blank screen. */
+    showLoading: function (text) {
+      boot({ text: text || 'Loading your clubhouse…', busy: true });
+    },
+    /**
+     * The session is good but the load failed. Sending someone back to the
+     * sign-in form here would be a lie — signing in again cannot help — so
+     * offer the one thing that can: another go.
+     */
+    showRetry: function (text, retry) {
+      boot({ text: text, busy: false, retry: retry });
+    },
     showRecovery: function () {
       $('authScreen').hidden = true;
+      $('bootScreen').hidden = true;
       $('app').hidden = true;
       $('recoverScreen').hidden = false;
       recoverMsg('');
