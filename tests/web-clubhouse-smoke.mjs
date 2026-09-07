@@ -48,9 +48,10 @@ async function member(name, email) {
     localStorage.setItem('__stub_state', JSON.stringify(st));
   }, shared);
   await page.goto(BASE);
-  await page.waitForSelector('#authScreen:not([hidden])', { timeout: 15000 });
+  await page.waitForSelector('#landing:not([hidden])', { timeout: 15000 });
   if (email) {
-    await page.click('#authToSignup');
+    await page.click('#landingStart');
+    await page.waitForSelector('#authScreen:not([hidden])');
     await page.fill('#authName', name);
     await page.fill('#authEmail', email);
     await page.fill('#authPassword', 'fairway-test');

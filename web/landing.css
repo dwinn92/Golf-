@@ -1,0 +1,240 @@
+
+/* ---------- landing page ---------- */
+/* From 470px up the app renders as a phone frame floating on a canvas, with
+   the body padded to give it room. The landing is a full-width page rather
+   than a phone, so it opts out of that frame while it is on screen. */
+body.on-landing { padding: 0; background: var(--bg-soft); }
+
+/* Shown to a visitor who is not signed in and did not arrive from an email
+   link. Everything else about the app is behind an account, so this is the
+   only page that has to explain itself. */
+.lp {
+  min-height: 100dvh;
+  background: var(--bg-soft);
+  color: var(--ink);
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+}
+.lp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 22px calc(16px + env(safe-area-inset-top));
+  padding-top: calc(16px + env(safe-area-inset-top));
+}
+.lp-brand {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--ink);
+}
+.lp-brand span { color: var(--gold); }
+.lp-nav-link {
+  text-align: right;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--fairway);
+  padding: 8px 4px;
+}
+.lp-nav-link:hover { text-decoration: underline; }
+
+.lp-hero {
+  padding: 18px 22px 34px;
+  background:
+    radial-gradient(120% 120% at 88% -10%, rgba(200, 166, 60, .18), transparent 62%),
+    linear-gradient(165deg, var(--pine-950), var(--pine-800));
+  color: #FFFFFF;
+  border-radius: 0 0 30px 30px;
+}
+.lp-eyebrow {
+  margin: 0 0 14px;
+  font-family: var(--mono);
+  font-size: .64rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .62);
+}
+.lp-hero h1 {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -.025em;
+  color: #FFFFFF;
+  text-wrap: balance;
+}
+.lp-lede {
+  margin: 0 0 22px;
+  font-size: .97rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, .82);
+  max-width: 34em;
+}
+.lp-cta { display: flex; flex-direction: column; gap: 10px; }
+.lp-primary {
+  min-height: 52px;
+  width: 100%;
+  border-radius: 15px;
+  background: #FFFFFF;
+  color: var(--pine-950);
+  font-size: 15.5px;
+  font-weight: 600;
+  /* the app sets button { text-align: inherit } globally */
+  text-align: center;
+}
+.lp-primary:hover { background: #F2F4F1; }
+.lp-secondary {
+  min-height: 52px;
+  width: 100%;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, .34);
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+.lp-secondary:hover { background: rgba(255, 255, 255, .09); }
+.lp-fine {
+  margin: 16px 0 0;
+  font-size: .76rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, .58);
+}
+
+.lp-strip {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  margin: 22px 22px 0;
+  background: var(--hair-2);
+  border: 1px solid var(--hair-2);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.lp-strip div {
+  background: #FFFFFF;
+  padding: 15px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.lp-strip b {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+.lp-strip span {
+  font-family: var(--mono);
+  font-size: .62rem;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+.lp-section { padding: 34px 22px 0; }
+.lp-section h2 {
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  color: var(--ink);
+}
+.lp-grid { display: grid; gap: 12px; }
+.lp-card {
+  background: #FFFFFF;
+  border: 1px solid var(--hair-2);
+  border-radius: 20px;
+  padding: 18px 18px 20px;
+}
+.lp-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--green-tint);
+  font-size: 17px;
+  margin-bottom: 12px;
+}
+.lp-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--ink);
+}
+.lp-card p { margin: 0; font-size: .88rem; line-height: 1.55; color: var(--ink-3); }
+
+.lp-steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+.lp-steps li {
+  position: relative;
+  counter-increment: step;
+  padding: 0 0 18px 44px;
+  border-left: 1px solid var(--hair-2);
+  margin-left: 15px;
+}
+.lp-steps li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.lp-steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: -15px;
+  top: -2px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--green);
+  color: #FFFFFF;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lp-steps b { display: block; font-size: .95rem; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+.lp-steps span { display: block; font-size: .86rem; line-height: 1.55; color: var(--ink-3); }
+
+.lp-honest p {
+  margin: 0;
+  font-size: .86rem;
+  line-height: 1.6;
+  color: var(--ink-3);
+  background: #FFFFFF;
+  border: 1px solid var(--hair-2);
+  border-radius: 18px;
+  padding: 16px 17px;
+}
+
+.lp-close { padding: 36px 22px 0; text-align: center; }
+.lp-close h2 {
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+.lp-close .lp-primary { background: var(--ink); color: #FFFFFF; }
+.lp-close .lp-primary:hover { background: #000000; }
+.lp-close .lp-secondary { border-color: var(--bd); color: var(--ink-3); margin-top: 10px; }
+.lp-close .lp-secondary:hover { background: var(--bg-chip); }
+
+.lp-foot { padding: 30px 22px 0; }
+.lp-foot p { margin: 0 0 7px; font-size: .72rem; line-height: 1.55; color: var(--faint); }
+
+@media (min-width: 700px) {
+  .lp-nav, .lp-hero, .lp-section, .lp-close, .lp-foot, .lp-strip { max-width: 880px; margin-inline: auto; }
+  .lp-hero { border-radius: 30px; padding: 40px 40px 44px; margin-top: 6px; }
+  .lp-hero h1 { font-size: 2.5rem; }
+  .lp-cta { flex-direction: row; }
+  .lp-cta button { width: auto; padding: 0 26px; }
+  .lp-strip { grid-template-columns: repeat(4, 1fr); }
+  .lp-grid { grid-template-columns: repeat(2, 1fr); }
+}

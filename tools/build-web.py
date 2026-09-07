@@ -24,6 +24,8 @@ appglue = (root / "web" / "js" / "app-web.js").read_text()
 storejs = (root / "web" / "js" / "store-supabase.js").read_text()
 auth_html = (root / "web" / "auth.html").read_text()
 auth_css = (root / "web" / "auth.css").read_text()
+landing_html = (root / "web" / "landing.html").read_text()
+landing_css = (root / "web" / "landing.css").read_text()
 
 # The <title> line and the artifact script tags are artifact-specific.
 body = src
@@ -45,7 +47,7 @@ body = body[: m.start()]
 ui_js = ui_js.replace("  boot();\n", "  window.__fairwayBoot = boot;\n")
 
 styles_end = body.index("</style>")
-body = body[:styles_end] + auth_css + body[styles_end:]
+body = body[:styles_end] + auth_css + landing_css + body[styles_end:]
 
 html = f"""<!DOCTYPE html>
 <html lang="en-GB">
@@ -65,6 +67,7 @@ html = f"""<!DOCTYPE html>
 <link rel="manifest" href="/manifest.webmanifest">
 </head>
 <body>
+{landing_html}
 {auth_html}
 {body}
 <script src="/vendor/supabase.js"></script>

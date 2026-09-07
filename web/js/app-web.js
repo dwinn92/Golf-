@@ -161,7 +161,9 @@
           'That link did not sign you in. If you opened it in a different browser ' +
           'from the one you signed up in, sign in with your email and password here instead.');
       } else {
-        global.FairwayAuthUI.show();
+        // A plain visit from someone with no session: show what the app is
+        // before asking for a password.
+        global.FairwayAuthUI.showLanding();
       }
     }).catch(function () {
       global.FairwayAuthUI.show('Could not reach the server. Check your connection and try again.');

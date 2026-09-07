@@ -32,9 +32,12 @@ page.on('console', m => {
 const ok = (c, m) => { if (!c) throw new Error('FAIL: ' + m); console.log('ok - ' + m); };
 
 await page.goto(BASE);
-await page.waitForSelector('#authScreen:not([hidden])');
-ok(true, 'a signed-out visitor gets the sign-in screen, not the app');
+await page.waitForSelector('#landing:not([hidden])');
+ok(true, 'a signed-out visitor gets the overview, not the app');
 ok(await page.$eval('#app', e => e.hidden), 'the app is hidden until signed in');
+await page.click('#landingSignIn');
+await page.waitForSelector('#authScreen:not([hidden])');
+ok(true, 'the overview leads to the sign-in form');
 
 // wrong password
 await page.fill('#authEmail', 'nobody@example.com');
@@ -143,11 +146,12 @@ const nine = await page.evaluate(() => window.__stub.tables.rounds.find(r => r.h
 ok(nine && nine.nine_of === 'front' && nine.nine_differential > 0,
    'a 9-hole round stores nine_of and the unrounded nine differential');
 
-// sign out returns to the login screen
+// signing out puts you back where a signed-out visitor belongs
 await page.click('.tab[data-nav="me"]');
 await page.click('#switchPlayerBtn');
-await page.waitForSelector('#authScreen:not([hidden])', { timeout: 15000 });
-ok(true, 'signing out returns to the sign-in screen');
+await page.waitForSelector('#landing:not([hidden])', { timeout: 15000 });
+ok(await page.$eval('#app', e => e.hidden), 'signing out closes the app');
+ok(true, 'signing out returns to the overview');
 
 await page.screenshot({ path: 'web-auth.png' });
 if (errors.length) { console.error(errors.join('\n')); process.exit(1); }

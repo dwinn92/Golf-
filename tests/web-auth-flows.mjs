@@ -68,6 +68,7 @@ page = await fresh();
 await page.goto(BASE + '/#access_token=tok&refresh_token=r&type=magiclink&uid=u-dan&email=dan@example.com');
 await page.waitForSelector('#app:not([hidden])', { timeout: 15000 });
 ok(true, 'a magic link signs you straight into the app');
+ok(!(await visible(page, '#landing')), 'a magic link does not stop at the overview');
 ok(!(await visible(page, '#recoverScreen')), 'a magic link does not ask for a new password');
 ok(!/access_token/.test(page.url()), 'the magic-link token is stripped from the address bar');
 
@@ -78,11 +79,12 @@ await page.waitForSelector('#authScreen:not([hidden])', { timeout: 15000 });
 const msg = await page.textContent('#authMsg');
 ok(/expired/i.test(msg), 'an expired link explains itself: "' + msg + '"');
 ok(!(await visible(page, '#app')), 'an expired link does not open the app');
+ok(!(await visible(page, '#landing')), 'a link that failed says so rather than dropping you on the overview');
 
 // ---- 5. a deep path still serves the app (SPA routing) ----
 page = await fresh();
 await page.goto(BASE + '/reset-password');
-await page.waitForSelector('#authScreen:not([hidden])', { timeout: 15000 });
+await page.waitForSelector('#landing:not([hidden])', { timeout: 15000 });
 ok(true, 'an unknown path still serves the app rather than a 404');
 
 // ---- 6. a failure during load never leaves a blank page ----
@@ -95,11 +97,28 @@ await page.waitForFunction(() => {
 }, null, { timeout: 15000 });
 ok(true, 'a member with no profile row still lands on a visible screen, not a blank page');
 
-// ---- 7. signed-out visitor ----
+// ---- 7. signed-out visitor gets the overview, and can get to the form ----
 page = await fresh();
 await page.goto(BASE);
+await page.waitForSelector('#landing:not([hidden])');
+ok(!(await visible(page, '#authScreen')), 'a normal visit explains the app before asking for a password');
+ok(!(await visible(page, '#recoverScreen')), 'a normal visit does not show the password reset screen');
+ok(await page.$eval('body', b => b.classList.contains('on-landing')),
+  'the overview steps outside the phone frame the app renders in');
+await page.click('#landingStart');
 await page.waitForSelector('#authScreen:not([hidden])');
-ok(!(await visible(page, '#recoverScreen')), 'a normal visit shows sign-in only');
+ok(!(await visible(page, '#landing')), 'starting an account leaves the overview');
+ok((await page.textContent('#authTitle')) === 'Create your account',
+  '"Create your account" opens the form ready to sign up');
+ok(!(await page.$eval('body', b => b.classList.contains('on-landing'))),
+  'the phone frame comes back with the form');
+await page.click('#authToLanding');
+await page.waitForSelector('#landing:not([hidden])');
+ok(!(await visible(page, '#authScreen')), 'and there is a way back to the overview');
+await page.click('#landingSignIn2');
+await page.waitForSelector('#authScreen:not([hidden])');
+ok((await page.textContent('#authTitle')) === 'Sign in',
+  '"I already have one" opens the form ready to sign in');
 
 // ---- 8. clock skew on the first load -> retried, not a dead end ----
 // Supabase mints the token on the auth node and PostgREST validates it on

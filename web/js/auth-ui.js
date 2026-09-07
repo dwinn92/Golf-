@@ -141,7 +141,14 @@
 
   var onRetry = null;
 
+  /* The landing is the one screen that is not inside the phone frame. */
+  function landingVisible(on) {
+    $('landing').hidden = !on;
+    document.body.classList.toggle('on-landing', on);
+  }
+
   function boot(opts) {
+    landingVisible(false);
     $('authScreen').hidden = true;
     $('recoverScreen').hidden = true;
     $('app').hidden = true;
@@ -168,6 +175,21 @@
       $('recoverForm').addEventListener('submit', saveNewPassword);
       $('recoverSkip').addEventListener('click', function () { global.FairwayRecovered(); });
       $('authForm').addEventListener('submit', submit);
+      ['landingStart', 'landingStart2'].forEach(function (id) {
+        $(id).addEventListener('click', function () {
+          global.FairwayAuthUI.show();
+          setMode('signup');
+        });
+      });
+      ['landingSignIn', 'landingSignIn2', 'landingSignIn3'].forEach(function (id) {
+        $(id).addEventListener('click', function () {
+          global.FairwayAuthUI.show();
+          setMode('signin');
+        });
+      });
+      $('authToLanding').addEventListener('click', function () {
+        global.FairwayAuthUI.showLanding();
+      });
       $('authToSignup').addEventListener('click', function () { setMode('signup'); });
       $('authToSignin').addEventListener('click', function () { setMode('signin'); });
       $('authToLink').addEventListener('click', function () { setMode('link'); });
@@ -175,13 +197,28 @@
       setMode('signin');
     },
     show: function (message, kind) {
+      landingVisible(false);
       $('authScreen').hidden = false;
       $('recoverScreen').hidden = true;
       $('bootScreen').hidden = true;
       $('app').hidden = true;
+      window.scrollTo(0, 0);
       if (message) setMsg(message, kind || 'bad');
     },
+
+    /* The overview a signed-out visitor sees first. Everything else about the
+       app is behind an account, so without this the front door is a password
+       box that never says what it is for. */
+    showLanding: function () {
+      landingVisible(true);
+      $('authScreen').hidden = true;
+      $('recoverScreen').hidden = true;
+      $('bootScreen').hidden = true;
+      $('app').hidden = true;
+      window.scrollTo(0, 0);
+    },
     hide: function () {
+      landingVisible(false);
       $('authScreen').hidden = true;
       $('recoverScreen').hidden = true;
       $('bootScreen').hidden = true;
@@ -199,6 +236,7 @@
       boot({ text: text, busy: false, retry: retry });
     },
     showRecovery: function () {
+      landingVisible(false);
       $('authScreen').hidden = true;
       $('bootScreen').hidden = true;
       $('app').hidden = true;
