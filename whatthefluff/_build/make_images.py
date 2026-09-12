@@ -70,7 +70,7 @@ OG_HTML = """<!doctype html><html><head><meta charset="utf-8">
   <div class="og-copy">
     <span class="og-eyebrow">{town} pet care</span>
     <h1>Dog walking, cat visits<br>&amp; <span>puppy training</span></h1>
-    <p>Insured · DBS checked · Max 4 dogs · Photos every walk</p>
+    <p>Insured · DBS checked · 1 &amp; 2 hour walks · Photos every visit</p>
     <div class="og-chips"><span>whatthefluff.co.uk</span><span>{phone}</span></div>
   </div>
   {badge}

@@ -78,17 +78,21 @@ def _timeline(title, sub, steps):
 def dog_walking():
     faqs = [
         (f"How much is dog walking in {SITE['town']}?",
-         f"<p>£{PRICES['group_walk']} for a 60-minute small-group walk, £{PRICES['solo_walk']} for a "
-         f"60-minute solo walk, or £{PRICES['solo_walk_30']} for a 30-minute solo. A block of five "
-         f"group walks is £{PRICES['bundle_5']}. Collection, drop-off, towels, treats and the GPS "
-         f"tracking are all included in the price.</p>"),
+         f"<p>£{PRICES['group_walk']} for a one-hour group walk, £{PRICES['group_walk_2h']} for "
+         f"two hours, £{PRICES['solo_walk']} for a one-hour solo walk or £{PRICES['solo_walk_30']} "
+         f"for a 30-minute solo. Private secure field hire is £{PRICES['field_session']}, and a "
+         f"block of five group walks is £{PRICES['bundle_5']}. Collection, drop-off, towels, treats "
+         f"and the GPS tracking are all included in the price.</p>"),
         ("How long is a walk, really?",
-         "<p>Sixty minutes of actual walking — the clock starts when we reach the field, not when I "
-         "leave my drive. Travel time is mine to absorb, not yours to pay for.</p>"),
+         "<p>A full hour or a full two hours of actual walking — the clock starts when we reach the "
+         "field, not when I leave my drive. Travel time is mine to absorb, not yours to pay for. "
+         "The two-hour walk is the one most working owners end up on, because it genuinely empties "
+         "the tank.</p>"),
         ("Where do the walks happen?",
-         "<p>Bluebell Woods, the canal towpath, Marsden meadows and the big enclosed field off "
-         "Priory Lane, rotated through the week so nobody gets bored. Routes are chosen for the "
-         "group that day — muddy and adventurous for the young ones, flat and sniffy for seniors.</p>"),
+         "<p>Dartford Heath, Swanscombe Heritage Park, the Thames Path at Ingress, Stone Lodge and "
+         "the woods out towards Bean, plus private secure fields when a dog needs space to itself. "
+         "I never use the same place more than twice in a week — it keeps walks interesting for the "
+         "dogs and means nobody can predict where we'll be.</p>"),
         ("What happens in bad weather?",
          "<p>We still go. Dogs need the day out and I own extremely unflattering waterproofs. In "
          "genuine danger — ice, thunder, heat above 24°C — walks switch to a shorter lead walk or "
@@ -114,12 +118,12 @@ def dog_walking():
     body = _hero(
         f"{icon('dog', 14)} Dog walking in {SITE['town']}",
         "Group dog walking that wears them out properly",
-        "Sixty minutes of woods, water and rabbit smells with a maximum of four carefully matched "
-        "dogs — then home, towelled off and fast asleep before you've finished your coffee.",
+        "One or two hours of woods, water and rabbit smells with a small, carefully matched group "
+        "— then home, towelled off and fast asleep before you've finished your coffee.",
         [("Home", "index.html"), ("Services", "services/"), ("Dog walking", None)],
-        [("users", "Max 4 dogs"), ("route", "GPS tracked"), ("camera", "Photos every walk"),
-         ("shield", "Fully insured")],
-        f'<sup>£</sup>{PRICES["group_walk"]}<small>/ 60 min</small>',
+        [("users", "Small matched groups"), ("route", "GPS tracked"),
+         ("camera", "Photos every walk"), ("shield", "Fully insured")],
+        f'<sup>£</sup>{PRICES["group_walk"]}<small>/ 1 hour</small>',
         "group-walk") + trust_strip()
 
     body += _included(
@@ -128,7 +132,7 @@ def dog_walking():
         [("home", "Collection &amp; drop-off",
           "I let myself in, harness up, and bring them home again — fed if you'd like, always with "
           "fresh water down."),
-         ("users", "A group of four, matched properly",
+         ("users", "A small group, matched properly",
           "By size, pace and play style. Your dog meets the group gradually, never dropped into the "
           "deep end on day one."),
          ("route", "Live Tractive GPS",
@@ -149,7 +153,7 @@ def dog_walking():
         [("10:45", "Pick-up", "I arrive, say a very embarrassing hello, harness on, quick toilet "
                               "break in the garden, then into their own crate in the van."),
          ("11:00", "Boots on the ground",
-          "Bluebell Woods loop. Long-line for the recall learners, off-lead for the reliable ones, "
+          "Out to the heath. Long-line for the recall learners, off-lead for the reliable ones, "
           "sniffing encouraged relentlessly — a good sniff tires a dog out more than a fast mile."),
          ("11:40", "Water, games, more sniffing",
           "Recall practice with actual cheese, a paddle in the stream if it's warm, then a calm "
@@ -201,18 +205,18 @@ def dog_walking():
 
     schema = [
         service_schema("Dog walking",
-                       f"Small-group and solo dog walking in {SITE['town']} — maximum four dogs, "
-                       f"GPS tracked, photo updates after every walk.",
+                       f"Small-group and solo dog walking in {SITE['town']}, {SITE['region']} — "
+                       f"one and two hour walks, GPS tracked, photo updates after every walk.",
                        "services/dog-walking.html", PRICES["group_walk"], "per 60-minute walk"),
         faq_schema,
         breadcrumb_schema([("Home", ""), ("Services", "services/"),
                            ("Dog walking", "services/dog-walking.html")]),
     ]
     return ("services/dog-walking.html", dict(
-        title=f"Dog Walking in {SITE['town']} | Max 4 Dogs | {SITE['name']}",
-        description=(f"Insured dog walking in {SITE['town']} from £{PRICES['group_walk']}. Small "
-                     f"groups of four, solo walks for nervous dogs, GPS routes and photos after every "
-                     f"walk."),
+        title=f"Dog Walking in {SITE['town']}, {SITE['region']} | {SITE['name']}",
+        description=(f"Insured dog walking in {SITE['town']}, {SITE['region']} from "
+                     f"£{PRICES['group_walk']}. One and two hour group walks, solo walks for nervous "
+                     f"dogs, GPS routes and photos after every walk."),
         path="services/dog-walking.html", body=body, active="services", depth=D, schema=schema),
         "monthly", "0.9")
 
@@ -245,8 +249,8 @@ def pet_check_ins():
          "feeding are part of the same visit price.</p>"),
         ("What if something's wrong while I'm away?",
          "<p>You get a call, not a text. I have your vet's details and your written consent for "
-         "emergency treatment on file, and I'll get them there myself. It's happened twice in six "
-         "years, and both cats are absolutely fine.</p>"),
+         "emergency treatment on file, and I'll get them there myself. It has happened twice in "
+         "all the years I've been doing this, and both cats were absolutely fine.</p>"),
         ("Is this better than a cattery?",
          "<p>For most cats, yes. Cats bond to territory more than to people — staying in their own "
          "home, with their own smells, litter tray and windowsill, is far less stressful than a "
@@ -533,9 +537,9 @@ def puppy_training():
 def services_index():
     cards = [
         ("pet-golden", "Group dog walking", "dog-walking.html",
-         f"From £{PRICES['group_walk']} / 60 min",
-         "Four dogs maximum, matched by pace and personality, GPS tracked and photographed.",
-         ["Collection and drop-off", "Live GPS route", "Photo report card", "Towel-off before home"]),
+         f"From £{PRICES['group_walk']} / 1 hour",
+         "Small matched groups, one or two hours, GPS tracked and photographed.",
+         ["Collection and drop-off", "1 or 2 hour walks", "Live GPS route", "Photo report card"]),
         ("pet-shepherd", "Solo &amp; 1-2-1 walks", "dog-walking.html#solo",
          f"From £{PRICES['solo_walk']} / 60 min",
          "For dogs who are reactive, nervous, elderly, recovering — or simply prefer their own company.",

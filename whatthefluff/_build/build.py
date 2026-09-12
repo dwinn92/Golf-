@@ -60,10 +60,10 @@ def build():
 
     body, schema = pages_home.home()
     write("index.html", page(
-        title=f"Dog Walking & Cat Visits in {SITE['town']} | {SITE['name']}",
+        title=f"Dog Walker in {SITE['town']}, {SITE['region']} | {SITE['name']}",
         description=(f"Insured, DBS-checked dog walking, cat visits and puppy training in "
-                     f"{SITE['town']}. Max 4 dogs per walk, GPS tracked, photos every time. Book a "
-                     f"free meet & greet."),
+                     f"{SITE['town']}, {SITE['region']}. One and two hour walks, GPS tracked, "
+                     f"photos every time. Free meet & greet."),
         path="", body=body, active="home", schema=schema))
     pages.append(("", "weekly", "1.0"))
 

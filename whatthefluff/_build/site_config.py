@@ -8,37 +8,44 @@ SITE = {
     "legal": "What the Fluff Pet Care",
     "owner": "Gemma",
     "tagline": "Dog walking, cat visits & puppy training",
+    # TODO: point this at the domain you buy for the new name.
     "domain": "https://www.whatthefluff.co.uk",
-    "phone_display": "07700 900123",
-    "phone_link": "+447700900123",
-    "whatsapp": "447700900123",
-    "email": "hello@whatthefluff.co.uk",
-    "town": "Hartley Green",
-    "region": "Cheshire",
-    "postcode": "HG1 4TP",
+    "phone_display": "07875 129614",
+    "phone_link": "+447875129614",
+    "whatsapp": "447875129614",
+    "email": "walkieswithgemma@gmail.com",
+    "town": "Greenhithe",
+    "region": "Kent",
+    "postcode": "DA9",          # district only — never publish a home address
     "country": "GB",
-    "lat": "53.2461",
-    "lon": "-2.4431",
-    "instagram": "https://www.instagram.com/whatthefluff",
-    "facebook": "https://www.facebook.com/whatthefluff",
-    "rating": "4.9",
-    "review_count": "87",
+    "lat": "51.4487",
+    "lon": "0.2842",
+    "instagram": "https://www.instagram.com/walkieswithgemma",
+    "facebook": "https://www.facebook.com/walkieswithgemmauk",
+    "founded": "2020",
+    # Leave rating/review_count empty until there is a real, countable number of
+    # reviews to point at — an invented aggregateRating is a manual-action risk.
+    "rating": "",
+    "review_count": "",
     "hours": "Mon–Fri 7:30am–6pm · Sat 8am–2pm",
     "areas": [
-        "Hartley Green", "Oakwood", "Willowbrook", "Marsden", "Priory Park",
-        "Elmsworth", "Brookside", "Ashfield", "Two Mills", "Heather Vale",
+        "Greenhithe", "Swanscombe", "Stone", "Knockhall", "Ingress Park",
+        "Ebbsfleet", "Northfleet", "Dartford", "Bean", "Betsham",
     ],
 }
 
+# TODO: confirm every one of these against what you actually charge.
 PRICES = {
-    "group_walk": "15",
+    "group_walk": "16",         # 1-hour group walk
+    "group_walk_2h": "24",      # 2-hour group walk
     "solo_walk": "22",
     "solo_walk_30": "16",
+    "field_session": "25",      # private secure field hire, 1 hour
     "check_in": "13",
     "puppy_visit": "13",
     "training_session": "45",
     "training_package": "160",
-    "bundle_5": "70",
+    "bundle_5": "75",
 }
 
 # --------------------------------------------------------------------------- #
@@ -273,9 +280,10 @@ def footer(depth=0):
           {logo_mark(cls="brand-mark", uid="foot")}
           <span class="brand-name">What the Fluff<span>{SITE['town']} pet care</span></span>
         </a>
-        <p>Small-group dog walking, in-home cat visits and pet check-ins, and kind puppy training
-        in {SITE['town']} and the surrounding villages. Fully insured, DBS checked and canine
-        first aid trained — with photos after every single visit.</p>
+        <p>One and two hour group dog walks, private field sessions, in-home cat visits and pet
+        check-ins, and kind puppy training across {SITE['town']}, {SITE['region']} and the
+        surrounding villages. Fully insured, DBS checked, canine first aid and CPR trained —
+        with photos after every single visit.</p>
         <div class="social-row">
           <a href="{SITE['instagram']}" rel="me noopener" aria-label="Instagram">{icon('instagram')}</a>
           <a href="{SITE['facebook']}" rel="me noopener" aria-label="Facebook">{icon('facebook')}</a>
@@ -316,8 +324,10 @@ def footer(depth=0):
     </div>
     <p class="tiny dim mt-4">Covering {areas}.</p>
     <div class="footer-bottom">
-      <p>© <span data-year>2026</span> {SITE['legal']} · Fully insured · DBS checked · Canine first aid trained</p>
-      <p>Formerly Walkies with Gemma &amp; For Fluff's Sake. Same me, same dogs, better name.</p>
+      <p>© <span data-year>2026</span> {SITE['legal']} · {SITE['town']}, {SITE['region']} · Fully
+        insured · DBS checked · Canine first aid &amp; CPR trained</p>
+      <p>Formerly Walkies with Gemma, walking here since {SITE['founded']}. Same me, same dogs,
+        better name.</p>
     </div>
   </div>
 </footer>
@@ -412,9 +422,10 @@ def local_business_schema():
         "@id": f"{SITE['domain']}/#business",
         "name": SITE["name"],
         "alternateName": ["Walkies with Gemma", "For Fluff's Sake"],
-        "description": (f"Dog walking, in-home cat visits, pet check-ins and puppy training in "
-                        f"{SITE['town']}. Fully insured, DBS checked, canine first aid trained, "
-                        f"GPS tracked walks and photo updates after every visit."),
+        "description": (f"One and two hour group dog walks, private field sessions, in-home cat "
+                        f"visits and pet check-ins, and puppy training in {SITE['town']}, "
+                        f"{SITE['region']}. Fully insured, DBS checked, canine first aid and CPR "
+                        f"trained. Established {SITE['founded']}."),
         "url": SITE["domain"] + "/",
         "telephone": SITE["phone_display"],
         "email": SITE["email"],
@@ -432,6 +443,7 @@ def local_business_schema():
             "addressCountry": SITE["country"],
         },
         "geo": {"@type": "GeoCoordinates", "latitude": SITE["lat"], "longitude": SITE["lon"]},
+        "hasMap": f"https://www.google.com/maps/search/?api=1&query={SITE['town']}+{SITE['region']}",
         "areaServed": [{"@type": "Place", "name": a} for a in SITE["areas"]],
         "openingHoursSpecification": [
             {"@type": "OpeningHoursSpecification",
@@ -441,12 +453,7 @@ def local_business_schema():
              "opens": "08:00", "closes": "14:00"},
         ],
         "sameAs": [SITE["instagram"], SITE["facebook"]],
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": SITE["rating"],
-            "reviewCount": SITE["review_count"],
-            "bestRating": "5",
-        },
+        "foundingDate": SITE["founded"],
         "knowsAbout": ["dog walking", "puppy training", "cat sitting", "pet care", "canine first aid"],
         "hasOfferCatalog": {
             "@type": "OfferCatalog",
@@ -460,6 +467,14 @@ def local_business_schema():
             ],
         },
     }
+    # Only ever emitted once there are real, countable reviews behind it.
+    if SITE["rating"] and SITE["review_count"]:
+        data["aggregateRating"] = {
+            "@type": "AggregateRating",
+            "ratingValue": SITE["rating"],
+            "reviewCount": SITE["review_count"],
+            "bestRating": "5",
+        }
     return json.dumps(data, ensure_ascii=False)
 
 
@@ -492,12 +507,13 @@ def service_schema(name, description, url, price, unit="per visit"):
 TRUST_ITEMS = [
     ("shield", "Fully insured"),
     ("id-card", "DBS checked"),
-    ("first-aid", "Canine first aid trained"),
+    ("first-aid", "Canine first aid &amp; CPR trained"),
     ("route", "Tractive GPS on every walk"),
     ("camera", "Photo report after every visit"),
-    ("users", "Small groups — 4 dogs max"),
+    ("users", "1 &amp; 2 hour group walks"),
+    ("leaf", "Routes rotated every week"),
     ("heart", "Free meet &amp; greet"),
-    ("calendar", "No lock-in contracts"),
+    ("calendar", f"Walking {SITE['town']}'s dogs since {SITE['founded']}"),
 ]
 
 
@@ -508,53 +524,77 @@ def trust_strip():
 </section>'''
 
 
-TESTIMONIALS = [
-    ("Luna comes home absolutely wrecked in the best way. The photos are the highlight of my "
-     "working day — you can see she adores Gemma.", "Sarah H.", "Luna's mum, Oakwood", "pet-golden"),
-    ("We were nervous about someone in the house with the cats. Gemma sends a photo of both of "
-     "them every visit, litter done, blinds shut. Faultless.", "Priya N.", "Mabel &amp; Otis, Hartley Green", "pet-cat"),
-    ("Four sessions in and our lunatic cockapoo has a recall. I genuinely didn't believe it "
-     "was possible.", "Tom &amp; Ellie", "Biscuit's humans, Willowbrook", "pet-cockapoo"),
-    ("Rocky is reactive and every other walker said no. Gemma does him solo, on the quiet "
-     "field routes, and he's a different dog.", "Dan M.", "Rocky's dad, Marsden", "pet-shepherd"),
-    ("Booked last minute when my shift changed at 6am. Sorted within ten minutes. Absolute "
-     "lifesaver.", "Claire T.", "Bella's mum, Priory Park", "pet-lab"),
-    ("The GPS map is brilliant — I can see exactly where they went and how far. No more "
-     "wondering if they actually got a proper walk.", "Michael R.", "Nala's dad, Brookside", "pet-golden"),
-    ("She spotted a limp before we did and messaged straight away. That's the level of care "
-     "you're getting.", "Hannah W.", "Poppy's mum, Elmsworth", "pet-cockapoo"),
-    ("Our puppy went from weeing on the rug at 11am to a happy, settled little dog. The "
-     "lunchtime pop-ins changed everything.", "Jordan K.", "Ziggy's human, Ashfield", "pet-lab"),
-]
+# Real client reviews only. Paste them in as
+#     (quote, who, where, portrait)
+# where portrait is one of pet-golden / pet-lab / pet-cockapoo / pet-shepherd /
+# pet-cat (or "" for no photo). Copy them word for word from Facebook, Google or
+# Nextdoor and use the name as the reviewer wrote it — first name and initial is
+# plenty. While this list is empty the site shows the "reviews live over here"
+# panel below instead, so nothing on the page is ever made up.
+TESTIMONIALS = []
 
 
 def testimonials_section(depth=0):
     r = "../" * depth
 
+    if not TESTIMONIALS:
+        return f'''<section class="section band-pink" id="reviews">
+  <div class="container" style="max-width:52rem">
+    <div class="section-head center reveal">
+      <span class="eyebrow">{icon('heart-solid', 14)} Wall of woof</span>
+      <h2>Happy dogs in {SITE['town']} since {SITE['founded']}</h2>
+      <p class="lede">The reviews live where the photos live — on Facebook and Instagram, with
+        muddy paws attached. Have a scroll before you book.</p>
+    </div>
+    <div class="grid grid-2 reveal">
+      <a class="card" href="{SITE['facebook']}" rel="noopener">
+        <span class="feature-icon">{icon('facebook', 20)}</span>
+        <h3 class="mt-2">Recommendations on Facebook</h3>
+        <p>Client recommendations, walk photos and the daily chaos, posted since
+          {SITE['founded']}.</p>
+        <span class="link-arrow mt-2">Read the reviews {icon('arrow-right', 16)}</span>
+      </a>
+      <a class="card" href="{SITE['instagram']}" rel="noopener">
+        <span class="feature-icon green">{icon('instagram', 20)}</span>
+        <h3 class="mt-2">Every walk on Instagram</h3>
+        <p>Nearly 2,000 posts of other people's dogs having the best hour of their day.</p>
+        <span class="link-arrow mt-2">See the pack {icon('arrow-right', 16)}</span>
+      </a>
+    </div>
+    <p class="center dim small mt-4 reveal">Happy to put you in touch with a current client before
+      you book — just ask.</p>
+  </div>
+</section>'''
+
     def card(t):
         quote, who, where, img = t
+        photo = (f'<img src="{r}assets/img/{img}.png" alt="" width="42" height="42" '
+                 f'loading="lazy" decoding="async">') if img else ""
         return (f'<figure class="quote"><span class="stars" aria-hidden="true">'
                 f'{"".join(icon("star-solid", 16) for _ in range(5))}</span>'
-                f'<p>“{quote}”</p><figcaption><img src="{r}assets/img/{img}.png" alt="" '
-                f'width="42" height="42" loading="lazy" decoding="async">'
+                f'<p>“{quote}”</p><figcaption>{photo}'
                 f'<span><strong>{who}</strong><small>{where}</small></span></figcaption></figure>')
 
-    row1 = "".join(card(t) for t in TESTIMONIALS[:4])
-    row2 = "".join(card(t) for t in TESTIMONIALS[4:])
+    half = max(1, (len(TESTIMONIALS) + 1) // 2)
+    row1 = "".join(card(t) for t in TESTIMONIALS[:half])
+    row2 = "".join(card(t) for t in TESTIMONIALS[half:]) or row1
+    summary = ""
+    if SITE["rating"] and SITE["review_count"]:
+        summary = f'''
+  <div class="container center mt-4">
+    <p class="rating-summary">{stars()} <strong>{SITE['rating']} out of 5</strong>
+      <span class="dim">from {SITE['review_count']} reviews across Google &amp; Facebook</span></p>
+  </div>'''
     return f'''<section class="section band-pink" id="reviews">
   <div class="container section-head center reveal">
     <span class="eyebrow">{icon('heart-solid', 14)} Wall of woof</span>
-    <h2>Loved by {SITE['review_count']} local families</h2>
+    <h2>What {SITE['town']} says</h2>
     <p class="lede">The reviews that matter most come with muddy paws attached.</p>
   </div>
   <div class="testimonial-rows">
     <div class="t-row" data-marquee>{row1}</div>
     <div class="t-row reverse" data-marquee>{row2}</div>
-  </div>
-  <div class="container center mt-4">
-    <p class="rating-summary">{stars()} <strong>{SITE['rating']} out of 5</strong>
-      <span class="dim">from {SITE['review_count']} reviews across Google &amp; Facebook</span></p>
-  </div>
+  </div>{summary}
 </section>'''
 
 

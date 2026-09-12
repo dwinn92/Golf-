@@ -100,7 +100,8 @@ def _shell(g, toc, prose, extra_schema=None):
       <div>
         <strong>Written by {SITE['owner']}, {SITE['name']}</strong>
         <small>Insured, DBS-checked dog walker, pet sitter and force-free trainer in
-          {SITE['town']} since 2020. <a href="{R}about.html">More about me</a>.</small>
+          {SITE['town']}, {SITE['region']} since {SITE['founded']}.
+          <a href="{R}about.html">More about me</a>.</small>
       </div>
     </div>
   </div>
@@ -154,8 +155,9 @@ def guide_cost():
       costs <strong>£18–£30</strong>. Thirty-minute visits and puppy pop-ins sit around
       <strong>£10–£15</strong>. In central London and the commuter belt, add roughly 30–50%; in
       rural areas you'll often pay a little less.</p>
-    <p>For context, here in {SITE['town']} I charge £{PRICES['group_walk']} for a 60-minute group
-      walk and £{PRICES['solo_walk']} for a solo one — squarely mid-market, and deliberately so.</p>
+    <p>For context, here in {SITE['town']} I charge £{PRICES['group_walk']} for a one-hour group
+      walk, £{PRICES['group_walk_2h']} for two hours and £{PRICES['solo_walk']} for a solo one —
+      squarely mid-market, and deliberately so.</p>
 
     <div class="table-wrap">
       <table>
@@ -499,7 +501,7 @@ def guides_index():
     <div class="section-head reveal">
       <span class="eyebrow">{icon('sparkle', 14)} Guides</span>
       <h1>Straight answers about looking after your pet</h1>
-      <p class="lede">Six years of the questions I get asked most, written down properly. No fluff.
+      <p class="lede">The questions I get asked most, written down properly. No fluff.
         Well — some fluff.</p>
     </div>
   </div>

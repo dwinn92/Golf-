@@ -11,10 +11,14 @@ R = ""
 # --------------------------------------------------------------------------- #
 def pricing():
     rows = [
-        ("Group adventure walk", "60 minutes", f"£{PRICES['group_walk']}",
-         "Max 4 dogs, collection and drop-off, GPS route, photo report"),
-        ("Group walk — block of 5", "5 × 60 minutes", f"£{PRICES['bundle_5']}",
+        ("Group adventure walk", "1 hour", f"£{PRICES['group_walk']}",
+         "Small matched group, collection and drop-off, GPS route, photo report"),
+        ("Group adventure walk", "2 hours", f"£{PRICES['group_walk_2h']}",
+         "The full empty-the-tank walk. Same group, twice the sniffing"),
+        ("Group walk — block of 5", "5 × 1 hour", f"£{PRICES['bundle_5']}",
          "Save £5. Used within 3 weeks, any days you like"),
+        ("Private field session", "1 hour", f"£{PRICES['field_session']}",
+         "Secure fenced field, your dog only — perfect for recall practice"),
         ("Solo walk", "60 minutes", f"£{PRICES['solo_walk']}",
          "One-to-one, quiet routes, training built in"),
         ("Solo walk — short", "30 minutes", f"£{PRICES['solo_walk_30']}",
@@ -61,7 +65,7 @@ def pricing():
          f"ask — if I'm already passing, it's usually still the standard price.</p>"),
         ("What if I have two dogs?",
          "<p>The second dog from the same household is £3 rather than a second full walk, as long as "
-         "they're happy walking together. They still count as two of the four spaces.</p>"),
+         "they're happy walking together. They still take two of the spaces in the group.</p>"),
     ]
     faq_html, faq_schema = faq_block(faqs)
 
@@ -104,11 +108,12 @@ def pricing():
       <div class="card price-card featured reveal reveal-delay-1">
         <span class="badge-pill pink">Most popular</span>
         <h3>Group adventure walk</h3>
-        <p class="dim small">An hour of woods, water and friends. Four dogs, maximum.</p>
-        <p class="amount"><sup>£</sup>{PRICES['group_walk']} <small>/ 60 min</small></p>
+        <p class="dim small">An hour of woods, water and friends — or two, if they've got it in
+          them. Small, matched groups.</p>
+        <p class="amount"><sup>£</sup>{PRICES['group_walk']} <small>/ 1 hour</small></p>
         <ul>
-          <li>{icon('check', 16)} Collection and drop-off included</li>
-          <li>{icon('check', 16)} Live GPS route and photo report</li>
+          <li>{icon('check', 16)} Two-hour walk £{PRICES['group_walk_2h']}</li>
+          <li>{icon('check', 16)} Collection, drop-off, GPS route and photos</li>
           <li>{icon('check', 16)} Block of five £{PRICES['bundle_5']}</li>
         </ul>
         <a class="btn btn-primary btn-block" href="book.html?service=group-walk">Book a group walk</a>
@@ -177,27 +182,37 @@ def pricing():
 # Areas
 # --------------------------------------------------------------------------- #
 AREA_COPY = {
-    "Hartley Green": ("Home turf. Most of my regular pack walks start here, which means short "
-                      "pick-ups, flexible timings and the occasional emergency slot when your day "
-                      "falls apart.", "Bluebell Woods and the recreation ground"),
-    "Oakwood": ("A ten-minute run from base, with the canal towpath on the doorstep — flat, quiet "
-                "and perfect for older dogs and post-op recovery walks.", "the canal towpath"),
-    "Willowbrook": ("New-build estates with small gardens and a lot of young dogs who need a proper "
-                    "hour out. Midday slots go fastest here.", "Willow Meadows"),
-    "Marsden": ("Big open fields and the best off-lead recall practice in the area. Popular with my "
-                "solo-walk clients because we rarely meet anyone.", "Marsden meadows"),
-    "Priory Park": ("Lots of cat clients and a strong contingent of working-from-home owners who "
-                    "book lunchtime pop-ins.", "the enclosed field off Priory Lane"),
-    "Elmsworth": ("Village lanes and bridleways, a favourite for sniffy, slow, senior-dog walks.",
-                  "the bridleway loop"),
-    "Brookside": ("Stream access for the water-obsessed spaniels and labradors, weather permitting.",
-                  "the brook and stepping stones"),
-    "Ashfield": ("A puppy-heavy postcode. Pop-ins, socialisation walks and first-time-owner training "
-                 "make up most of my Ashfield week.", "Ashfield common"),
-    "Two Mills": ("Slightly further out, so I group the visits together — book early in the week if "
-                  "you want a specific time.", "the old mill path"),
-    "Heather Vale": ("Hill routes with proper views and proper mud. Excellent for dogs with too much "
-                     "energy and owners with a good washing machine.", "the vale ridge path"),
+    "Greenhithe": ("Home turf, and where most days start. Short pick-ups, flexible timings and the "
+                   "occasional emergency slot when your day falls apart — plus the Thames on the "
+                   "doorstep for a proper riverside sniff.",
+                   "the Thames Path and Ingress Park"),
+    "Swanscombe": ("A minute up the road, with Swanscombe Heritage Park and the peninsula's open "
+                   "grassland close by — big skies, big smells and space to actually stretch out.",
+                   "Swanscombe Heritage Park"),
+    "Stone": ("Stone Lodge and the fields behind it make for flat, easy walking, which suits "
+              "senior dogs and anyone recovering from an op.",
+              "Stone Lodge and the surrounding fields"),
+    "Knockhall": ("Quiet residential streets on the hill above the river. A popular postcode for "
+                  "lunchtime cat visits and puppy pop-ins while owners are at work.",
+                  "the Knockhall streets down to the riverside"),
+    "Ingress Park": ("Landscaped riverside grounds and a lot of young dogs in flats and townhouses "
+                     "who genuinely need their two hours out.",
+                     "the Ingress Abbey grounds and riverside path"),
+    "Ebbsfleet": ("Garden City new-builds, small gardens and a lot of first-time owners — puppy "
+                  "pop-ins and socialisation walks make up most of the Ebbsfleet week.",
+                  "Springhead Park and the Ebbsfleet green spaces"),
+    "Northfleet": ("A short hop along the A226. Riverside routes and quiet green pockets, good for "
+                   "dogs who'd rather not meet half the neighbourhood.",
+                   "the riverside paths towards Gravesend"),
+    "Dartford": ("Spoilt for choice — Central Park, Brooklands Lakes and the wide open heath. The "
+                 "best off-lead recall practice anywhere nearby.",
+                 "Dartford Heath and Central Park"),
+    "Bean": ("Village lanes with the woods right there. A favourite for slow, sniffy walks and for "
+             "dogs who find busier parks a bit much.",
+             "the woodland around Bean and Darenth Country Park"),
+    "Betsham": ("Out towards Southfleet — lanes, farmland and almost nobody about, which is exactly "
+                "why the nervous dogs go there.",
+                "the lanes towards Southfleet"),
 }
 
 
@@ -210,7 +225,7 @@ def areas():
       <span class="feature-icon{" green" if i % 2 else ""}">{icon('map-pin', 20)}</span>
       <h3 class="mt-2">Dog walking in {area}</h3>
       <p>{copy}</p>
-      <p class="small dim mt-2">{icon('leaf', 14)} Usual route: {spot}</p>
+      <p class="small dim mt-2">{icon('leaf', 14)} Green space nearby: {spot}</p>
       <a class="link-arrow mt-2" href="book.html">Book in {area} {icon('arrow-right', 16)}</a>
     </article>'''
 
@@ -282,7 +297,7 @@ def areas():
     {faq_html}
   </div>
 </section>
-{cta_band(title=f"Walking in {SITE['town']} since 2020")}'''
+{cta_band(title=f"Walking in {SITE['town']} since {SITE['founded']}")}'''
 
     schema = [faq_schema, breadcrumb_schema([("Home", ""), ("Areas covered", "areas.html")])]
     return ("areas.html", dict(
@@ -317,12 +332,13 @@ def about():
       <div class="reveal">
         <span class="eyebrow">{icon('heart-solid', 14)} About</span>
         <h1>Hi, I'm {SITE['owner']}</h1>
-        <p class="lede mt-2">I've spent six years walking, feeding, training and thoroughly spoiling
-          the animals of {SITE['town']}. Three business names, one very consistent obsession.</p>
+        <p class="lede mt-2">I've been walking, feeding, training and thoroughly spoiling the
+          animals of {SITE['town']} since {SITE['founded']}. Three business names, one very
+          consistent obsession.</p>
         <div class="hero-chips">
           <span class="chip">{icon('shield', 16)} Fully insured</span>
           <span class="chip">{icon('id-card', 16)} Enhanced DBS</span>
-          <span class="chip">{icon('first-aid', 16)} Canine first aid</span>
+          <span class="chip">{icon('first-aid', 16)} Canine first aid &amp; CPR</span>
           <span class="chip">{icon('graduation', 16)} Force-free methods</span>
         </div>
       </div>
@@ -336,23 +352,27 @@ def about():
 
 <section class="section">
   <div class="container prose mx-auto">
-    <h2>It started with somebody else's labrador</h2>
-    <p>In 2020 I was walking a neighbour's labrador, Alfie, because she'd gone back to work and he
-      was slowly dismantling her kitchen. Within a month I was walking four dogs. Within a year I'd
-      handed in my notice, bought a van, and learned more about anal glands than anyone should.</p>
-    <p>That was <strong>Walkies with Gemma</strong>. Then it was <strong>For Fluff's Sake</strong>,
-      for about eleven days, because I liked the logo. Now it's <strong>What the Fluff</strong> — and
-      this one is staying, I promise. Same me, same dogs, same cat visits, same training. Just a name
-      that makes people smile when it drives past.</p>
+    <h2>Three names, one obsession</h2>
+    <p>Walkies with Gemma started in {SITE['founded']}, walking dogs around {SITE['town']} and
+      feeding other people's cats. Then it was <strong>For Fluff's Sake</strong>, briefly, because I
+      liked the logo. Now it's <strong>What the Fluff</strong> — and this one is staying, I promise.
+      Same me, same dogs, same cat visits, same training. Just a name that makes people smile when it
+      drives past.</p>
+    <p>Before any of it I volunteered at Battersea Dogs &amp; Cats Home and fostered cats for Bow
+      Lodge Cat Rescue, which is where I learned the bits you can't get from a course: how a
+      frightened dog actually behaves, how long a cat needs to decide about you, and how much a
+      quiet, predictable routine is worth to an animal that's had neither.</p>
 
     <h2>How I work</h2>
-    <p>Four dogs on a walk, never more. I turn down work most weeks because taking six would mean I
-      couldn't watch all of them properly, and the whole point of paying someone is that somebody is
-      actually watching.</p>
+    <p>Walks are a full hour or a full two hours, in small groups matched by size, pace and play
+      style. Not a rushed twenty minutes round the block with eight dogs on a coupler — the whole
+      point of paying someone is that somebody is genuinely watching.</p>
+    <p><strong>I never use the same place more than twice in a week.</strong> Partly enrichment: new
+      smells, new ground, a dog who comes home properly satisfied rather than bored. Partly security:
+      nobody should be able to predict where I'll be with a van full of other people's dogs.</p>
     <p>I train the way the evidence says to train: rewards, patience and setting dogs up to get it
       right. No prong collars, no e-collars, no shouting, no "showing them who's boss". If a dog is
-      struggling, the answer is nearly always more distance, more time or a better payment plan —
-      not more pressure.</p>
+      struggling, the answer is nearly always more distance and more time — not more pressure.</p>
     <p>And I over-communicate. You'll get photos after every visit, honest notes when something isn't
       right, and a phone call rather than a text if it's important. I'd rather tell you about a limp
       on day one than have you find it on day four.</p>
@@ -363,8 +383,8 @@ def about():
         control, which is the cover that matters when your pet is in someone else's hands.</li>
       <li><strong>Enhanced DBS certificate</strong> — current, and shown at every meet &amp; greet
         without being asked.</li>
-      <li><strong>Canine first aid certified</strong> — refreshed every two years, with a kit in the
-        van and your vet's details on file.</li>
+      <li><strong>Canine first aid and CPR trained</strong> — kept current, with a kit in the van and
+        your vet's details on file.</li>
       <li><strong>Written terms and a care plan</strong> — so everyone knows what happens on a snow
         day, a vet day, or the day your flight is delayed.</li>
     </ul>
@@ -381,8 +401,8 @@ def about():
       <img src="assets/img/pet-golden.png" alt="" width="62" height="62" loading="lazy" decoding="async">
       <div>
         <strong>{SITE['owner']} · {SITE['name']}</strong>
-        <small>Dog walker, pet sitter and force-free trainer in {SITE['town']} since 2020.
-          {SITE['phone_display']} · {SITE['email']}</small>
+        <small>Dog walker, pet sitter and force-free trainer in {SITE['town']}, {SITE['region']}
+          since {SITE['founded']}. {SITE['phone_display']} · {SITE['email']}</small>
       </div>
     </div>
   </div>
@@ -393,9 +413,9 @@ def about():
     schema = [person, breadcrumb_schema([("Home", ""), ("About", "about.html")])]
     return ("about.html", dict(
         title=f"About Gemma | Dog Walker in {SITE['town']} | {SITE['name']}",
-        description=(f"Meet Gemma — six years walking, sitting and training pets in {SITE['town']}. "
-                     f"Insured, DBS checked, canine first aid trained, four dogs per walk "
-                     f"maximum."),
+        description=(f"Meet Gemma — walking, sitting and training pets in {SITE['town']}, "
+                     f"{SITE['region']} since {SITE['founded']}. Insured, DBS checked, canine first "
+                     f"aid and CPR trained, ex-Battersea volunteer."),
         path="about.html", body=body, active="about", schema=schema), "yearly", "0.6")
 
 

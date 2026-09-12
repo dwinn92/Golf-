@@ -1,26 +1,31 @@
 """The home page."""
+import datetime
+
 from site_config import (SITE, PRICES, icon, stars, logo_svg, trust_strip,
                          testimonials_section, cta_band, faq_block)
 
 HOME_FAQS = [
     (f"How much does a dog walker cost in {SITE['town']}?",
-     f"<p>A 60-minute small-group adventure walk is <strong>£{PRICES['group_walk']}</strong>, and a "
-     f"solo one-to-one walk is <strong>£{PRICES['solo_walk']}</strong>. In-home cat visits and pet "
-     f"check-ins are <strong>£{PRICES['check_in']}</strong> per 30-minute visit, and a block of five "
-     f"group walks is <strong>£{PRICES['bundle_5']}</strong> — a week of walks for the price of "
-     f"four and a half. Everything is listed openly on the "
+     f"<p>A one-hour group adventure walk is <strong>£{PRICES['group_walk']}</strong> and a "
+     f"two-hour walk is <strong>£{PRICES['group_walk_2h']}</strong>. A solo one-to-one walk is "
+     f"<strong>£{PRICES['solo_walk']}</strong>, and in-home cat visits and pet check-ins are "
+     f"<strong>£{PRICES['check_in']}</strong> per 30-minute visit. A block of five group walks is "
+     f"<strong>£{PRICES['bundle_5']}</strong>. Everything is listed openly on the "
      f"<a href='pricing.html'>prices page</a>; there are no booking fees, no peak-time surcharges "
      f"and no lock-in contracts.</p>"),
     ("Are you insured, DBS checked and first aid trained?",
      "<p>All three. I hold full public liability and care-custody-control insurance, an enhanced "
-     "DBS certificate, and a certified canine first aid qualification that I refresh every two "
-     "years. I bring the paperwork to the meet &amp; greet so you can see it for yourself — you "
-     "shouldn't have to ask a stranger for proof before handing over a key.</p>"),
-    ("How many dogs are on a group walk?",
-     "<p>Four, maximum. Most walkers take six to eight. Four means I can actually watch every dog, "
-     "keep recall tight, and match personalities properly — the bouncy teenagers go out together, "
-     "the gentle seniors get the calmer route. Your dog is never thrown into a group they haven't "
-     "been introduced to.</p>"),
+     "DBS certificate, and canine first aid and CPR training that I keep current. I bring the "
+     "paperwork to the meet &amp; greet so you can see it for yourself — you shouldn't have to ask "
+     "a stranger for proof before handing over a key.</p>"),
+    ("How big are the group walks, and where do they go?",
+     "<p>Small and carefully matched — by size, pace and play style, so the bouncy teenagers go out "
+     "together and the gentle seniors get the calmer route. Your dog is never thrown into a group "
+     "they haven't been introduced to.</p>"
+     "<p>Walks are one or two hours, and I never use the same place more than twice in a week. "
+     "Dartford Heath, Swanscombe Heritage Park, the Thames Path at Ingress, Stone Lodge and the "
+     "woods out towards Bean all get a turn — it keeps things interesting for the dogs, and it "
+     "means nobody can predict where we'll be.</p>"),
     ("What happens at the free meet &amp; greet?",
      "<p>I come to your home for about 30 minutes. We do the boring-but-important bits — vet "
      "details, feeding, medication, quirks, recall, the neighbour's cat they hate — and your dog "
@@ -28,10 +33,11 @@ HOME_FAQS = [
      "sorted, paperwork signed and a schedule agreed. It costs nothing and there's no obligation "
      "to book.</p>"),
     ("Do you look after cats and other pets too?",
-     f"<p>Yes — in-home cat visits are one of my favourite parts of the week. A 30-minute check-in "
-     f"covers feeding, fresh water, litter trays, medication, play or a lap-sit, plus post, plants, "
-     f"curtains and lights so the house looks lived in. I also do rabbits, guinea pigs, small "
-     f"furries and fish. <a href='services/pet-check-ins.html'>See what's included</a>.</p>"),
+     f"<p>Yes — cat visits and small animal care have been part of this since {SITE['founded']}, and "
+     f"they're one of my favourite parts of the week. A 30-minute check-in covers feeding, fresh "
+     f"water, litter trays, medication, play or a lap-sit, plus post, plants, curtains and lights so "
+     f"the house looks lived in. Rabbits, guinea pigs, small furries and fish too. "
+     f"<a href='services/pet-check-ins.html'>See what's included</a>.</p>"),
     ("How will I know my pet is okay?",
      "<p>Every walk and visit ends with a report card in your phone: photos, where you went, how "
      "far, toilet notes, mood, food eaten and anything I noticed. Group walks are tracked live on "
@@ -58,15 +64,16 @@ HOME_FAQS = [
 
 def home():
     faq_html, faq_schema = faq_block(HOME_FAQS)
+    years = datetime.date.today().year - int(SITE["founded"])
 
     hero = f'''<section class="hero">
   <div class="container-wide hero-inner">
     <div class="hero-copy hero-anim">
-      <span class="eyebrow">{icon('map-pin', 14)} Dog walking &amp; pet care in {SITE['town']}</span>
+      <span class="eyebrow">{icon('map-pin', 14)} Dog walking &amp; pet care in {SITE['town']}, {SITE['region']}</span>
       <h1>The best part of <span class="accent">their day.</span></h1>
-      <p class="lede">Small-group adventure walks, in-home cat visits and kind puppy training —
-        GPS-tracked, fully insured, and photographed so you see every muddy grin while you're stuck
-        in a meeting.</p>
+      <p class="lede">One and two hour group adventure walks, in-home cat visits and kind puppy
+        training across {SITE['town']} and {SITE['region']} — GPS-tracked, fully insured, and
+        photographed so you see every muddy grin while you're stuck in a meeting.</p>
       <div class="hero-actions">
         <a class="btn btn-primary btn-lg" href="book.html">Book a free meet &amp; greet {icon('arrow-right', 18)}</a>
         <a class="btn btn-ghost btn-lg" href="#services">See services &amp; prices</a>
@@ -84,8 +91,8 @@ def home():
           <img src="assets/img/pet-cockapoo.png" alt="" width="40" height="40" loading="lazy" decoding="async">
           <img src="assets/img/pet-cat.png" alt="" width="40" height="40" loading="lazy" decoding="async">
         </span>
-        {stars()}
-        <span><strong>{SITE['rating']}</strong> from {SITE['review_count']} local reviews</span>
+        <span>Looking after {SITE['town']}'s dogs and cats since {SITE['founded']} —
+          <a class="link-arrow" href="{SITE['instagram']}" rel="noopener">see the pack on Instagram</a></span>
       </div>
     </div>
 
@@ -97,7 +104,7 @@ def home():
       </div>
       <div class="sticker sticker-2">
         <span class="sticker-dot green">{icon('route', 18)}</span>
-        <span>4.2 km tracked<small>Bluebell Woods loop</small></span>
+        <span>4.2 km tracked<small>Dartford Heath loop</small></span>
       </div>
     </div>
   </div>
@@ -131,13 +138,14 @@ def home():
         </div>
         <div class="service-body">
           <h3>Group dog walking</h3>
-          <p>An hour of proper countryside sniffing with a maximum of four carefully matched dogs.</p>
+          <p>One or two hours of proper sniffing with a small, carefully matched group — and a
+            different route most days.</p>
           <ul>
             <li>{icon('check', 16)} Collected and dropped home, paws towelled</li>
             <li>{icon('check', 16)} Live Tractive GPS route on every walk</li>
-            <li>{icon('check', 16)} Photo report card before I've left the drive</li>
+            <li>{icon('check', 16)} Private secure field sessions available</li>
           </ul>
-          <p class="price">From £{PRICES['group_walk']} <span>/ 60-minute walk</span></p>
+          <p class="price">From £{PRICES['group_walk']} <span>/ 1 hour · £{PRICES['group_walk_2h']} for 2</span></p>
           <a class="link-arrow" href="services/dog-walking.html">Dog walking details {icon('arrow-right', 16)}</a>
         </div>
       </article>
@@ -178,7 +186,8 @@ def home():
     </div>
 
     <p class="center dim mt-4 reveal">Also available: solo walks for dogs who like their own space
-      (£{PRICES['solo_walk']}), puppy pop-ins (£{PRICES['puppy_visit']}) and holiday cover.
+      (£{PRICES['solo_walk']}), private field hire (£{PRICES['field_session']}), puppy pop-ins
+      (£{PRICES['puppy_visit']}), small animal care and holiday cover.
       <a class="link-arrow" href="pricing.html">See all prices {icon('arrow-right', 16)}</a></p>
   </div>
 </section>'''
@@ -225,7 +234,7 @@ def home():
             <div class="msg me">Amazing 😂 thank you!<time>12:06</time></div>
           </div>
           <div class="phone-map">
-            <span class="phone-map-chip">4.2 km · 58 min · Bluebell Woods</span>
+            <span class="phone-map-chip">4.2 km · 58 min · Dartford Heath</span>
             <svg viewBox="0 0 300 150" preserveAspectRatio="none">
               <rect width="300" height="150" fill="#EEF6F0"/>
               <path d="M0 96c34 0 40-40 74-40s42 54 84 54 46-52 78-52 44 22 64 22" stroke="#DCEBE1" stroke-width="16" fill="none" stroke-linecap="round"/>
@@ -242,10 +251,14 @@ def home():
 
     stats = f'''<section class="section-sm">
   <div class="container stats reveal">
-    <div class="stat"><p class="num"><span data-count="9400" data-suffix="+">9,400+</span></p><p>walks &amp; visits completed</p></div>
-    <div class="stat"><p class="num"><span data-count="120" data-suffix="+">120+</span></p><p>local families on the books</p></div>
-    <div class="stat"><p class="num"><span data-count="4.9" data-decimals="1">4.9</span><i>★</i></p><p>average review score</p></div>
-    <div class="stat"><p class="num"><span data-count="4">4</span></p><p>dogs per group walk, max</p></div>
+    <div class="stat"><p class="num"><span data-count="{years}">{years}</span></p>
+      <p>years looking after {SITE['town']}'s pets</p></div>
+    <div class="stat"><p class="num">1 &amp; 2<i>h</i></p>
+      <p>group walks — not a rushed half hour</p></div>
+    <div class="stat"><p class="num"><span data-count="{len(SITE['areas'])}">{len(SITE['areas'])}</span></p>
+      <p>villages covered around {SITE['town']}</p></div>
+    <div class="stat"><p class="num">Free</p>
+      <p>meet &amp; greet before anything is booked</p></div>
   </div>
 </section>'''
 
@@ -259,9 +272,9 @@ def home():
     </div>
     <div class="grid grid-3">
       <div class="card reveal"><span class="feature-icon">{icon('users', 20)}</span>
-        <h3 class="mt-2">Four dogs. Never more.</h3>
-        <p>Matched by size, pace and personality. Small enough that I can watch every single one of
-          them, all of the time.</p></div>
+        <h3 class="mt-2">Small groups, properly matched</h3>
+        <p>Matched by size, pace and play style — small enough that I can watch every single one of
+          them, all of the time. Your dog is never dropped into a group they haven't met.</p></div>
       <div class="card reveal reveal-delay-1"><span class="feature-icon green">{icon('first-aid', 20)}</span>
         <h3 class="mt-2">Trained for the bad day</h3>
         <p>Canine first aid certified and refreshed, with a pet first aid kit in the van and your
@@ -279,9 +292,10 @@ def home():
         <p>Shift changed? Meeting overran? Message me. Change or cancel with 24 hours' notice, and
           no contract ever ties you in.</p></div>
       <div class="card reveal reveal-delay-2"><span class="feature-icon green">{icon('leaf', 20)}</span>
-        <h3 class="mt-2">Routes they actually love</h3>
-        <p>Bluebell woods, canal towpaths, the big field with the rabbit smells. Rotated weekly so
-          nobody gets bored — including me.</p></div>
+        <h3 class="mt-2">A different walk most days</h3>
+        <p>Dartford Heath, Swanscombe Heritage Park, the Thames Path at Ingress, the woods out by
+          Bean. I never use the same place more than twice in a week — better enrichment for the
+          dogs, and better security for everyone.</p></div>
     </div>
   </div>
 </section>'''
@@ -348,12 +362,12 @@ def home():
       <div class="card price-card featured reveal reveal-delay-1">
         <span class="badge-pill pink">Most popular</span>
         <h3>Group adventure walk</h3>
-        <p class="dim small">An hour of sniffing, splashing and being a dog — with four friends,
-          maximum.</p>
-        <p class="amount"><sup>£</sup>{PRICES['group_walk']} <small>/ 60 min</small></p>
+        <p class="dim small">An hour of sniffing, splashing and being a dog — or two hours for the
+          ones who never switch off.</p>
+        <p class="amount"><sup>£</sup>{PRICES['group_walk']} <small>/ 1 hour</small></p>
         <ul>
-          <li>{icon('check', 16)} Live GPS route &amp; photo report</li>
-          <li>{icon('check', 16)} Collection and drop-off included</li>
+          <li>{icon('check', 16)} Two hours £{PRICES['group_walk_2h']}</li>
+          <li>{icon('check', 16)} Live GPS route, photos and drop-off</li>
           <li>{icon('check', 16)} 5-walk block £{PRICES['bundle_5']} (save £5)</li>
         </ul>
         <a class="btn btn-primary btn-block" href="book.html?service=group-walk">Book a group walk</a>
@@ -383,12 +397,13 @@ def home():
     <div class="reveal">
       <span class="eyebrow on-green">{icon('heart-solid', 14)} Hello, I'm {SITE['owner']}</span>
       <h2>Same me. Same dogs. Same cat visits and training.</h2>
-      <p class="lede mt-2">I've been walking {SITE['town']}'s dogs for six years — first as Walkies
-        with Gemma, briefly as For Fluff's Sake, and now as What the Fluff, because apparently I
-        cannot be trusted around Canva and a logo idea.</p>
-      <p class="mt-2">What hasn't changed: I take four dogs, not eight. I send photos every time. I
-        learn which lamp post your dog must sniff and I let them. And I treat your home and your keys
-        the way I'd want a stranger to treat mine.</p>
+      <p class="lede mt-2">I've been walking {SITE['town']}'s dogs since {SITE['founded']} — first
+        as Walkies with Gemma, briefly as For Fluff's Sake, and now as What the Fluff, because
+        apparently I cannot be trusted around Canva and a logo idea.</p>
+      <p class="mt-2">What hasn't changed: small matched groups, one and two hour walks rather
+        than a rushed half hour, and a different route most days. I send photos every time, I learn
+        which lamp post your dog must sniff and I let them, and I treat your home and your keys the
+        way I'd want a stranger to treat mine.</p>
       <p class="hand mt-3" style="font-size:1.9rem;line-height:1">Gemma x</p>
       <div class="flex wrap gap-1 mt-3">
         <a class="btn btn-white" href="about.html">My story {icon('arrow-right', 18)}</a>
