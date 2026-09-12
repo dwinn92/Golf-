@@ -51,9 +51,9 @@ and the Facebook and Instagram profiles. Note `walkieswithgemma.co.uk` is now a
 parked domain — worth checking whether it can be recovered, or buying one for the
 new name.
 
-## ⚠️ Before you publish
+## ⚠️ Before you point customers at it
 
-Four things still need Gemma's word before this goes live.
+It's live, but four things still need Gemma's word.
 
 1. **Prices.** Everything in `PRICES` (`_build/site_config.py`) is a plausible
    north-Kent rate, not her rate: £16 for a one-hour group walk, £24 for two
@@ -79,9 +79,18 @@ Four things still need Gemma's word before this goes live.
    `small, matched group` and put the number in; it will lift conversion more
    than anything else on the page.
 
-Also: the domain in `SITE["domain"]` is a placeholder (`whatthefluff.co.uk`), and
-the animal photos are cut out of the rebrand poster — swap in real photos of the
-actual dogs when there's time, because they convert better than stock.
+Also: the animal photos are cut out of the rebrand poster — swap in real photos of
+the actual dogs when there's time, because they convert better than stock.
+
+The site is currently crawlable. If you'd rather it stayed out of Google until the
+prices are confirmed, add this to `netlify.toml` and redeploy:
+
+```toml
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+```
 
 The booking form is **front-end only**. It validates, steps through and shows a
 success state, but nothing is sent anywhere yet. See "Wiring up the form" below.
