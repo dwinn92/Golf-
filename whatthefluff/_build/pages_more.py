@@ -232,15 +232,31 @@ def areas():
     body = f'''<section class="page-hero">
   <div class="container">
     {breadcrumbs([("Home", "index.html"), ("Areas covered", None)])}
-    <div class="section-head reveal">
-      <span class="eyebrow">{icon('map-pin', 14)} Areas covered</span>
-      <h1>Dog walking and pet visits around {SITE['town']}</h1>
-      <p class="lede">Ten villages, roughly a fifteen-minute drive from {SITE['town']} centre. Here's
-        where I walk, what the routes are like and how the week is usually laid out.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary btn-lg" href="book.html">Check availability {icon('arrow-right', 18)}</a>
-        <a class="btn btn-ghost btn-lg" href="https://wa.me/{SITE['whatsapp']}" rel="noopener">
-          {icon('whatsapp', 18)} Ask on WhatsApp</a>
+    <div class="feature-row" style="align-items:center">
+      <div class="reveal">
+        <span class="eyebrow">{icon('map-pin', 14)} Areas covered</span>
+        <h1>Dog walking and pet visits around {SITE['town']}</h1>
+        <p class="lede mt-2">Ten villages, roughly a fifteen-minute drive from {SITE['town']}
+          centre. Here's where I walk, what the routes are like and how the week is usually laid
+          out.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="book.html">Check availability {icon('arrow-right', 18)}</a>
+          <a class="btn btn-ghost btn-lg" href="https://wa.me/{SITE['whatsapp']}" rel="noopener">
+            {icon('whatsapp', 18)} Ask on WhatsApp</a>
+        </div>
+      </div>
+      <div class="feature-media reveal reveal-delay-1">
+        <div class="card">
+          <h2 class="mb-2" style="font-size:1.5rem">The short version</h2>
+          <ul class="feature-list" style="margin-top:0">
+            <li><span class="feature-icon">{icon('map-pin', 18)}</span><span><strong>10 villages covered</strong>
+              <p>Everywhere within about fifteen minutes of {SITE['town']} centre.</p></span></li>
+            <li><span class="feature-icon green">{icon('gift', 18)}</span><span><strong>No travel charges</strong>
+              <p>The price on the price list is the price you pay, wherever you are on this page.</p></span></li>
+            <li><span class="feature-icon">{icon('calendar', 18)}</span><span><strong>Usually starting within a week</strong>
+              <p>Meet &amp; greet in the next few days, first walk right after.</p></span></li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

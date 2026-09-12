@@ -572,15 +572,23 @@ def services_index():
     body = f'''<section class="page-hero">
   <div class="container">
     {breadcrumbs([("Home", "index.html"), ("Services", None)], depth=D)}
-    <div class="section-head reveal">
-      <span class="eyebrow">{icon('paw', 14)} Services</span>
-      <h1>Everything I do for {SITE['town']}'s animals</h1>
-      <p class="lede">Walks, visits and training — all from the same familiar face, all insured, all
-        with photos afterwards. Start with a free meet &amp; greet and we'll work out what your pet
-        actually needs.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary btn-lg" href="{R}book.html">Book a free meet &amp; greet {icon('arrow-right', 18)}</a>
-        <a class="btn btn-ghost btn-lg" href="{R}pricing.html">See all prices</a>
+    <div class="feature-row" style="align-items:center">
+      <div class="reveal">
+        <span class="eyebrow">{icon('paw', 14)} Services</span>
+        <h1>Everything I do for {SITE['town']}'s animals</h1>
+        <p class="lede mt-2">Walks, visits and training — all from the same familiar face, all
+          insured, all with photos afterwards. Start with a free meet &amp; greet and we'll work out
+          what your pet actually needs.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="{R}book.html">Book a free meet &amp; greet {icon('arrow-right', 18)}</a>
+          <a class="btn btn-ghost btn-lg" href="{R}pricing.html">See all prices</a>
+        </div>
+      </div>
+      <div class="feature-media reveal reveal-delay-1">
+        <div class="pack-ledge">
+          <img src="{R}assets/img/pack-660.png" width="660" height="193" decoding="async"
+               alt="Four dogs and a cat peeking over a fence, waiting for their walk">
+        </div>
       </div>
     </div>
   </div>
