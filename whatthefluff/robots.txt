@@ -3,4 +3,4 @@ Allow: /
 Disallow: /_build/
 
 # Nothing to hide, everything to sniff.
-Sitemap: https://www.whatthefluff.co.uk/sitemap.xml
+Sitemap: https://what-the-fluff-36e9.netlify.app/sitemap.xml

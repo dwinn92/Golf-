@@ -8,8 +8,10 @@ SITE = {
     "legal": "What the Fluff Pet Care",
     "owner": "Gemma",
     "tagline": "Dog walking, cat visits & puppy training",
-    # TODO: point this at the domain you buy for the new name.
-    "domain": "https://www.whatthefluff.co.uk",
+    # The live URL. Change this to the custom domain when you buy one and
+    # rebuild — canonicals, Open Graph tags, the sitemap and the schema all
+    # follow it.
+    "domain": "https://what-the-fluff-36e9.netlify.app",
     "phone_display": "07875 129614",
     "phone_link": "+447875129614",
     "whatsapp": "447875129614",

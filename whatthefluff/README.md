@@ -1,5 +1,11 @@
 # What the Fluff — website mock-up
 
+**Live at [what-the-fluff-36e9.netlify.app](https://what-the-fluff-36e9.netlify.app)**
+(Netlify project `what-the-fluff-36e9`). Rename the project or add a custom domain
+in the Netlify dashboard; when the domain changes, update `SITE["domain"]` in
+`_build/site_config.py` and rebuild so the canonicals, Open Graph tags, sitemap
+and schema follow it.
+
 A complete, production-shaped marketing site for **What the Fluff** — Gemma's dog
 walking, cat visit and puppy training business in Greenhithe, Kent (formerly
 *Walkies with Gemma*, briefly *For Fluff's Sake*). Static HTML, no framework,
@@ -81,6 +87,21 @@ The booking form is **front-end only**. It validates, steps through and shows a
 success state, but nothing is sent anywhere yet. See "Wiring up the form" below.
 
 ---
+
+## Deploying
+
+The site is linked to the Netlify project in `.netlify/state.json`, and
+`netlify.toml` publishes this folder as-is (no build step) with long cache headers
+on the fonts and images, a few tidy redirects, and the generator source blocked
+from the web. To redeploy after a rebuild:
+
+```sh
+python3 _build/build.py
+npx -y @netlify/mcp@latest --site-id 4f47ec2f-807b-43b7-9d37-9b78bbf06c67
+```
+
+or drag this folder onto app.netlify.com, or connect the repo with base directory
+`whatthefluff`.
 
 ## Running it
 
