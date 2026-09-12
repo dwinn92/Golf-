@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /_build/
+
+# Nothing to hide, everything to sniff.
+Sitemap: https://www.whatthefluff.co.uk/sitemap.xml

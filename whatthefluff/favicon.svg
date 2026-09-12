@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="What the Fluff">
+  <defs>
+    <linearGradient id="mpad-fav" x1="0.15" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#1F4B32"/><stop offset="0.4" stop-color="#2E7049"/><stop offset="1" stop-color="#F5739D"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="#FDE7EE" stroke="#1F4B32" stroke-width="5"/>
+  <circle cx="100" cy="100" r="84" fill="none" stroke="#F5739D" stroke-width="7"/>
+  <g transform="translate(0,4) scale(1.12) translate(-12,-12)">
+    <g stroke="#1F4B32" stroke-width="7" fill="#FFF8FA">
+      <ellipse cx="57" cy="92" rx="12.5" ry="17" transform="rotate(-24 57 92)"/>
+      <ellipse cx="82" cy="72" rx="12.5" ry="18.5" transform="rotate(-8 82 72)"/>
+      <ellipse cx="118" cy="72" rx="12.5" ry="18.5" transform="rotate(8 118 72)"/>
+      <ellipse cx="143" cy="92" rx="12.5" ry="17" transform="rotate(24 143 92)"/>
+    </g>
+    <g fill="none" stroke="url(#mpad-fav)" stroke-width="7.5" stroke-linecap="round">
+      <path d="M100,106 C74,92 54,110 58,132 C62,152 88,158 110,144"/>
+      <path d="M100,106 C126,92 146,110 142,132 C138,152 112,158 90,144"/>
+      <path d="M100,132 C93,125 85,120 85,113 C85,108 89,104 93,104 C96,104 99,106 100,109 C101,106 104,104 107,104 C111,104 115,108 115,113 C115,120 107,125 100,132 Z"/>
+    </g>
+  </g>
+</svg>

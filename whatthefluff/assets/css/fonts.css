@@ -1,0 +1,7 @@
+/* Brand fonts, self-hosted and subset to the glyphs this site uses.
+   Baloo 2, Plus Jakarta Sans and Caveat — SIL Open Font License 1.1.
+   Regenerate with: python3 _build/make_fonts.py */
+@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:300 800;font-display:swap;src:url('../fonts/plus-jakarta-sans-normal.woff2') format('woff2');}
+@font-face{font-family:'Plus Jakarta Sans';font-style:italic;font-weight:400 600;font-display:swap;src:url('../fonts/plus-jakarta-sans-italic.woff2') format('woff2');}
+@font-face{font-family:'Baloo 2';font-style:normal;font-weight:500 800;font-display:swap;src:url('../fonts/baloo-2-normal.woff2') format('woff2');}
+@font-face{font-family:'Caveat';font-style:normal;font-weight:400 600;font-display:swap;src:url('../fonts/caveat-normal.woff2') format('woff2');}
